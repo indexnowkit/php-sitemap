@@ -24,6 +24,13 @@ $exit = $runner->run($io, new SitemapOptions($argument, $changedSince, $allowFor
   is invalid, log at `critical` and fall back to `SitemapConfig::disabled()` the way the core `ConfigFactory::load()`
   does for the core options; when `enabled` is false, register no command (bundle) or refuse to run it with
   `sitemap.enabled is false.` and exit `INVALID` (Laravel, Yii2).
+- **Log lines.** The one line the wiring above adds, so operators can grep for it (the core's
+  `docs/operations.md` lists the rest):
+
+  | Level | Message |
+  |---|---|
+  | `critical` | `indexnow: invalid sitemap configuration, the sitemap command is disabled until it is fixed: {error}` (Laravel, Yii2; Laravel appends `(run "php artisan indexnow:check")`) |
+
 - **Transport.** The reader fetches over the transport the facade submits through, so `http.client` and
   `http.timeout` apply and nothing is discovered twice. `$kit->transport` is `null` only when the facade was built
   around a custom submitter; `Http\TransportFactory::lazy($kit->config)` covers that.
