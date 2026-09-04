@@ -3,6 +3,19 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: SemVer; until 1.0 minor versions may
 contain breaking changes, listed under "Changed". What the compatibility promise covers: [docs/bc.md](docs/bc.md).
 
+## [0.1.1] — 2026-09-05
+
+### Added
+
+- `Sitemap\Console\Definitions::sitemap(string $sitemapUrlOption = 'sitemap.url')`: the argument and options of the
+  `sitemap` command declared once (`Console\CommandDefinition` of the core), rendered by every adapter; covers
+  `SitemapOptions`.
+
+### Changed
+
+- Requires `indexnowkit/core ^0.5` (the `CommandDefinition` model).
+- Dev tooling: a coverage floor (`tests/coverage-floor.txt`) checked by the monorepo CI.
+
 ## [0.1.0] — 2026-09-05
 
 First release: the sitemap reader and the `sitemap` command body, extracted from `indexnowkit/core` 0.3
