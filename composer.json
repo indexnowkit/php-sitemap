@@ -1,0 +1,75 @@
+{
+    "name": "indexnowkit/sitemap",
+    "description": "Sitemap reader for indexnowkit: streams sitemap indexes, gzip and text sitemaps into IndexNow submissions; the sitemap command of every adapter",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "keywords": [
+        "indexnow",
+        "sitemap",
+        "seo",
+        "yandex",
+        "bing",
+        "indexing"
+    ],
+    "homepage": "https://github.com/indexnowkit/php-sitemap",
+    "authors": [
+        {
+            "name": "Igor Pinchuk",
+            "email": "i.pinchuk.work@gmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/indexnowkit/php/issues",
+        "source": "https://github.com/indexnowkit/php-sitemap",
+        "docs": "https://github.com/indexnowkit/php-sitemap/blob/main/README.md",
+        "security": "https://github.com/indexnowkit/php-sitemap/blob/main/SECURITY.md"
+    },
+    "require": {
+        "php": "^8.2",
+        "ext-xmlreader": "*",
+        "indexnowkit/core": "^0.4",
+        "psr/log": "^2.0 || ^3.0"
+    },
+    "require-dev": {
+        "nyholm/psr7": "^1.8",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5",
+        "symfony/console": "^6.4 || ^7.0 || ^8.0",
+        "symfony/http-client": "^6.4 || ^7.0"
+    },
+    "suggest": {
+        "ext-zlib": "Reading gzip-compressed sitemaps",
+        "symfony/console": "Console\\SitemapRunner: the body of the sitemap command used by the framework adapters"
+    },
+    "autoload": {
+        "psr-4": {
+            "IndexNowKit\\Sitemap\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "IndexNowKit\\Sitemap\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse --memory-limit=1G",
+        "ci:install:highest": "@composer update --no-interaction --prefer-dist",
+        "ci:install:lowest": "@composer update --no-interaction --prefer-dist --prefer-lowest --prefer-stable"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": false
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    }
+}
