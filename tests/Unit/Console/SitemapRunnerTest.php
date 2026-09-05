@@ -111,9 +111,12 @@ final class SitemapRunnerTest extends TestCase
             self::assertStringContainsString('batches', $display);
             self::assertSame(['https://www.example.com/s1', 'https://www.example.com/s2'], $this->sentUrls());
             self::assertCount(2, $this->transport->posts, 'batch.max_urls: 1 gives one request per URL');
+            self::assertStringContainsString('2 URL(s) submitted from the whole sitemap in 2 batches without', $display, 'a full run above batch.max_urls warns: engines recrawl everything');
+            self::assertStringContainsString('--changed-since', $display);
 
             $this->transport->posts = [];
             self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($file, changedSince: '2021-01-01', json: true)));
+
             $rows = $this->json();
             self::assertIsArray($rows[0]);
             self::assertSame(1, $rows[0]['url_count']);

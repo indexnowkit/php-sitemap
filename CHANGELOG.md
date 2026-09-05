@@ -8,6 +8,9 @@ contain breaking changes, listed under "Changed". What the compatibility promise
 ### Added
 
 - `Check\SitemapSpoolCheck` lines carry the code `sitemap.spool` (`SitemapSpoolCheck::CODE`; core 0.8 `check --json`).
+- `indexnow:sitemap` warns after a run without `--changed-since` that submitted more than `batch.max_urls` URLs (the
+  whole sitemap: engines see every page as changed): run it once, then schedule it with `--changed-since` (spec 17
+  §3.3/§5.7). With `--json` the warning goes to stderr.
 
 ## [0.3.0] — 2026-09-06
 

@@ -127,6 +127,10 @@ final class SitemapRunner
         if (!$json) {
             $io->text(self::foundLine($found, $sitemap, $since));
         }
+        if ($since === null && $found > $batchSize) {
+            // A full run is the one-off after installation; scheduled runs pass --changed-since or re-announce everything.
+            ($json ? $io->getErrorStyle() : $io)->warning(\sprintf('%d URL(s) submitted from the whole sitemap in %d batches without --changed-since: engines see every page as changed and may crawl them all again. Run the full sitemap once, then schedule this command with --changed-since (e.g. "1 day").', $found, (int) ceil($found / $batchSize)));
+        }
 
         return $this->formatter->summary($io, $summary, $json);
     }
