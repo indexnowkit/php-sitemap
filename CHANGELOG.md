@@ -16,6 +16,13 @@ contain breaking changes, listed under "Changed". What the compatibility promise
   builds on moved there from the core with their FQCN unchanged, and the runner renders through `SymfonyStyle` like
   every command body of the family; `symfony/console` leaves `suggest` (it is a requirement now).
 
+### Added
+
+- `SitemapConfig::loadOrDisabled(array $block, LoggerInterface $logger, string $checkCommand)`: the runtime path of
+  an adapter — `fromArray()`, and for an invalid block one `critical` line `indexnow: invalid sitemap configuration,
+  the sitemap command is disabled until it is fixed: {error} (run "{check}")` plus `disabled()`. Replaces the copies
+  in Laravel and Yii2 (spec 17 §4.3).
+
 ### Documentation
 
 - README: "Notes for AI assistants" (package, minimal complete snippet, verification, pitfalls across the adapters);

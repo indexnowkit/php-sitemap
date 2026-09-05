@@ -20,16 +20,18 @@ $exit = $runner->run($io, new SitemapOptions($argument, $changedSince, $allowFor
 
 - **Configuration.** Add `SitemapConfig::OPTIONS` to the keys your `Adapter\ConfigFactory` owns
   (`ownedOptions: [...MY_OPTIONS, ...SitemapConfig::OPTIONS]`), so a typo inside the block is warned about. Do not
-  list a bare `sitemap` key: it would stop `Config::unknownOptions()` from looking inside the block. When the block
-  is invalid, log at `critical` and fall back to `SitemapConfig::disabled()` the way the core `ConfigFactory::load()`
-  does for the core options; when `enabled` is false, register no command (bundle) or refuse to run it with
+  list a bare `sitemap` key: it would stop `Config::unknownOptions()` from looking inside the block. At runtime
+  build the block with `SitemapConfig::loadOrDisabled($block, $logger, 'php artisan indexnow:check')`: an invalid
+  block is one `critical` line and `SitemapConfig::disabled()`, the way the core `ConfigFactory::load()` treats the
+  core options (a DI container that validates at compile time, like the bundle, uses `fromArray()` and lets the
+  build fail); when `enabled` is false, register no command (bundle) or refuse to run it with
   `sitemap.enabled is false.` and exit `INVALID` (Laravel, Yii2).
 - **Log lines.** The one line the wiring above adds, so operators can grep for it (the core's
   `docs/operations.md` lists the rest):
 
   | Level | Message |
   |---|---|
-  | `critical` | `indexnow: invalid sitemap configuration, the sitemap command is disabled until it is fixed: {error}` (Laravel, Yii2; Laravel appends `(run "php artisan indexnow:check")`) |
+  | `critical` | `indexnow: invalid sitemap configuration, the sitemap command is disabled until it is fixed: {error} (run "{check}")` — `loadOrDisabled()`, `{check}` is the adapter's check command (Laravel, Yii2) |
 
 - **Transport.** The reader fetches over the transport the facade submits through, so `http.client` and
   `http.timeout` apply and nothing is discovered twice. `$kit->transport` is `null` only when the facade was built

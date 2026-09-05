@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IndexNowKit\Sitemap;
 
 use IndexNowKit\Exception\ConfigurationException;
+use Psr\Log\LoggerInterface;
 
 /**
  * The `sitemap` block of an adapter's configuration, validated once. Adapters build it with {@see fromArray()} from
@@ -111,6 +112,26 @@ final readonly class SitemapConfig
     public static function disabled(): self
     {
         return new self(enabled: false);
+    }
+
+    /**
+     * The runtime path of an adapter: {@see fromArray()}, and when the block is invalid one `critical` line naming the
+     * error and the check command, then {@see disabled()} — the sitemap command refuses to run until the block is
+     * fixed, nothing throws from the container. The same rule the core's `Adapter\ConfigFactory::load()` applies to
+     * the core options.
+     *
+     * @param array<string, mixed> $block        the raw `sitemap` block
+     * @param string               $checkCommand the adapter's check command, `php artisan indexnow:check`
+     */
+    public static function loadOrDisabled(array $block, LoggerInterface $logger, string $checkCommand): self
+    {
+        try {
+            return self::fromArray($block);
+        } catch (ConfigurationException $e) {
+            $logger->critical('indexnow: invalid sitemap configuration, the sitemap command is disabled until it is fixed: {error} (run "{check}")', ['error' => $e->getMessage(), 'check' => $checkCommand, 'exception' => $e]);
+
+            return self::disabled();
+        }
     }
 
     private static function isSitemapLocation(string $url): bool

@@ -9,6 +9,7 @@ use IndexNowKit\Exception\ConfigurationException;
 use IndexNowKit\Sitemap\SitemapConfig;
 use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SpoolMode;
+use IndexNowKit\Testing\ArrayLogger;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
@@ -73,6 +74,23 @@ final class SitemapConfigTest extends TestCase
         $this->expectException(ConfigurationException::class);
         $this->expectExceptionMessage($message);
         SitemapConfig::fromArray($block);
+    }
+
+    #[TestDox('loadOrDisabled() is fromArray(); an invalid block is one critical line naming the error and the check command, and a disabled config')]
+    public function testLoadOrDisabled(): void
+    {
+        $logger = new ArrayLogger();
+
+        $valid = SitemapConfig::loadOrDisabled(['spool' => 'memory', 'max_depth' => '2'], $logger, 'php artisan indexnow:check');
+        self::assertTrue($valid->enabled);
+        self::assertSame(SpoolMode::Memory, $valid->spool);
+        self::assertSame(2, $valid->maxDepth);
+        self::assertSame([], $logger->records);
+
+        $disabled = SitemapConfig::loadOrDisabled(['spool' => 'tape'], $logger, 'php yii indexnow/check');
+        self::assertFalse($disabled->enabled);
+        self::assertSame(['indexnow: invalid sitemap configuration, the sitemap command is disabled until it is fixed: "sitemap.spool" must be one of auto, disk, memory, got "tape". (run "php yii indexnow/check")'], $logger->messages('critical'));
+        self::assertInstanceOf(ConfigurationException::class, $logger->records[0]['context']['exception'] ?? null);
     }
 
     #[TestDox('OPTIONS are dotted keys only, and together with Config::OPTIONS they let unknownOptions() see a typo inside the block')]
