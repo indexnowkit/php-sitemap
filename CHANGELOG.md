@@ -3,6 +3,19 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: SemVer; until 1.0 minor versions may
 contain breaking changes, listed under "Changed". What the compatibility promise covers: [docs/bc.md](docs/bc.md).
 
+## [0.5.0] — Unreleased
+
+### Added
+
+- **`--no-verify`** in `Console\Definitions::sitemap()` and `SitemapOptions::$noVerify`: `SitemapRunner` takes an appended
+  `?SubmitterFactoryInterface $unverifiedSubmitters` and submits through it (a fresh submitter, `--force` or not) when the
+  flag is given — past the pre-flight of `indexnowkit/verify` the adapters decorate the regular factory with. Without a
+  second factory (no verify package) the flag is accepted and changes nothing.
+
+### Changed
+
+- Requires `indexnowkit/core ^0.9` and `indexnowkit/console ^0.3`.
+
 ## [0.4.0] — 2026-09-06
 
 ### Changed

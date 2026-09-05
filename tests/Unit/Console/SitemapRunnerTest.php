@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IndexNowKit\Sitemap\Tests\Unit\Console;
 
 use DateTimeImmutable;
+use IndexNowKit\Adapter\SubmitterFactoryInterface;
 use IndexNowKit\Config;
 use IndexNowKit\Console\ExitCode;
 use IndexNowKit\Http\Response;
@@ -16,6 +17,7 @@ use IndexNowKit\Sitemap\SitemapEntry;
 use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SitemapSourceInterface;
 use IndexNowKit\Sitemap\Tests\Support\Factory;
+use IndexNowKit\SubmitterInterface;
 use IndexNowKit\Testing\FakeTransport;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
@@ -203,5 +205,44 @@ final class SitemapRunnerTest extends TestCase
         $source->empty = true;
         self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions()));
         self::assertStringContainsString('Nothing submitted: the source yielded no URL.', $this->output->fetch());
+    }
+
+    #[TestDox('--no-verify submits through the second (plain) factory; without one the flag changes nothing')]
+    public function testNoVerifyUsesTheUnverifiedFactory(): void
+    {
+        $kit = $this->kit();
+        $source = new class implements SitemapSourceInterface {
+            public function read(string $sitemap, ?DateTimeImmutable $changedSince = null): iterable
+            {
+                yield new SitemapEntry('https://www.example.com/plain', null);
+            }
+        };
+        $calls = [];
+        $recording = static function (string $name) use (&$calls, $kit): SubmitterFactoryInterface {
+            return new class ($name, $calls, $kit) implements SubmitterFactoryInterface {
+                /** @param list<string> $calls */
+                public function __construct(private readonly string $name, private array &$calls, private readonly IndexNowKit $kit) {}
+
+                public function create(bool $force, bool $dryRun): SubmitterInterface
+                {
+                    $this->calls[] = $this->name . ($force ? ' force' : '');
+
+                    return $this->kit->submitter;
+                }
+            };
+        };
+        $runner = new SitemapRunner($kit, $source, $recording('decorated'), unverifiedSubmitters: $recording('plain'));
+
+        self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions(noVerify: true)));
+        self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions(noVerify: true, force: true)));
+        self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions(force: true)));
+        self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions()));
+        self::assertSame(['plain', 'plain force', 'decorated force'], $calls, 'the flag picks the plain factory even without --force; without the flag the application submitter or the decorated factory');
+        self::assertCount(4, $this->transport->posts);
+
+        $calls = [];
+        $single = new SitemapRunner($kit, $source, $recording('decorated'));
+        self::assertSame(ExitCode::SUCCESS, $single->run($this->io(), new SitemapOptions(noVerify: true)));
+        self::assertSame([], $calls, 'no second factory: the application submitter, the flag is accepted');
     }
 }

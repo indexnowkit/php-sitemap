@@ -30,6 +30,9 @@ final class SitemapRunner
     /**
      * @param string|null $defaultSitemap   `sitemap.url` from the adapter config ({@see SitemapConfig::$url}); falls back to <base_url>/sitemap.xml
      * @param string      $sitemapUrlOption how the adapter names that option (`indexnowkit.sitemap.url`), printed when no sitemap is known
+     * @param SubmitterFactoryInterface|null $unverifiedSubmitters the plain factory `--no-verify` submits through when the adapter
+     *                                                             decorated `$submitters` with the pre-flight of indexnowkit/verify;
+     *                                                             null = `$submitters` (the flag then changes nothing)
      */
     public function __construct(
         private readonly IndexNowKit $indexNow,
@@ -38,6 +41,7 @@ final class SitemapRunner
         private readonly ?string $defaultSitemap = null,
         private readonly ResultFormatterInterface $formatter = new ResultRenderer(),
         private readonly string $sitemapUrlOption = 'sitemap.url',
+        private readonly ?SubmitterFactoryInterface $unverifiedSubmitters = null,
     ) {}
 
     /**
@@ -81,7 +85,10 @@ final class SitemapRunner
             return ExitCode::SUCCESS;
         }
 
-        $submitter = SubmitterFactory::choose($this->submitters, $this->indexNow, $options->force, false);
+        // --no-verify: the plain factory, and a fresh submitter from it even without --force (the application's own is the decorated one).
+        $submitter = $options->noVerify && $this->unverifiedSubmitters !== null
+            ? $this->unverifiedSubmitters->create($options->force, false)
+            : SubmitterFactory::choose($this->submitters, $this->indexNow, $options->force, false);
         $batchSize = max(1, $this->indexNow->config->batchMaxUrls);
         $summary = new ResultSummary();
         $batch = [];

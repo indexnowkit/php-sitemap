@@ -14,6 +14,7 @@ final class SitemapOptions
      * @param string|null $changedSince      only URLs whose <lastmod> is newer: "1 day", "2026-09-01"
      * @param bool        $allowForeignHosts follow nested sitemaps hosted on another origin for this run
      * @param bool        $dryRun            list the URLs without submitting
+     * @param bool        $noVerify          submit through the plain submitter factory, past the pre-flight of indexnowkit/verify
      */
     public function __construct(
         public readonly ?string $sitemap = null,
@@ -22,5 +23,6 @@ final class SitemapOptions
         public readonly bool $force = false,
         public readonly bool $dryRun = false,
         public readonly bool $json = false,
+        public readonly bool $noVerify = false,
     ) {}
 }

@@ -93,8 +93,11 @@ logged and skipped; a failing root throws `Http\Exception\TransportException`, a
 ## The command
 
 `Sitemap\Console\SitemapRunner` is the body of `sitemap [url]` (`--changed-since "1 day"`, `--allow-foreign-hosts`,
-`--force`, `--dry-run`, `--json`); it streams, submits every `batch.max_urls` URLs, and submits the pending batch
-before reporting a mid-run failure (the re-run is idempotent, what was read is still worth announcing). `--force`
+`--force`, `--dry-run`, `--json`, `--no-verify`); it streams, submits every `batch.max_urls` URLs, and submits the pending batch
+before reporting a mid-run failure (the re-run is idempotent, what was read is still worth announcing). `--no-verify`
+submits past the pre-flight of [`indexnowkit/verify`](https://github.com/indexnowkit/php/tree/main/packages/verify)
+when the adapter has it enabled (a sitemap is the site's own list of its URLs, and a batch above `verify.max_batch`
+would go unverified anyway, with a warning); without the package the flag is accepted and changes nothing. `--force`
 ignores the debounce window (URLs announced within the last `debounce.per_url` seconds are sent again): for a
 deliberate one-off re-run, never in a schedule. `batch.max_urls` (10 000) is the protocol's ceiling, not a target:
 smaller batches are accepted just as well, and a scheduled run with `--changed-since` normally sends a few. The

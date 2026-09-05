@@ -30,6 +30,7 @@ final class Definitions
                 OptionDefinition::flag('force', 'Ignore the debounce store', 'f'),
                 OptionDefinition::flag('dry-run', 'List URLs without submitting'),
                 OptionDefinition::flag('json', 'Machine-readable output'),
+                OptionDefinition::flag('no-verify', 'Skip the pre-flight GETs of indexnowkit/verify for this run (a sitemap is the site\'s own list of its URLs); accepted and ignored without the package'),
             ],
         );
     }
