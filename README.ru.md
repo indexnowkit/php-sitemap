@@ -6,7 +6,15 @@
 (`indexnowkit/symfony-bundle`, `laravel`, `yii2`) — это этот пакет; в чистом PHP это три строки поверх
 [`indexnowkit/core`](https://github.com/indexnowkit/php/tree/main/packages/core).
 
-[English version](README.md)
+**Google — нет.** Google не поддерживает IndexNow, ping-endpoint для sitemap закрыт, а Indexing API ограничен
+`JobPosting` / `BroadcastEvent`. Для Google остаётся sitemap; этот пакет объявляет его только движкам IndexNow.
+IndexNow — уведомление, не индексация: обходить ли и когда — решает поисковик.
+
+Прогон без `--changed-since` объявляет весь sitemap заново: сделайте это один раз, дальше — по расписанию с
+`--changed-since "1 day"`. `--changed-since` опирается на `<lastmod>`; генератор, пишущий `lastmod = now()` для каждого
+URL, превращает каждый прогон в полный, а записи без `lastmod` при этой опции пропускаются.
+
+[English version](README.md) · Issues и pull requests: [github.com/indexnowkit/php](https://github.com/indexnowkit/php/issues) (репозитории `php-*` — read-only сплиты)
 
 ## Установка
 

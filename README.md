@@ -6,11 +6,19 @@ a million-URL sitemap never lives in memory. The `sitemap` command of every fram
 (`indexnowkit/symfony-bundle`, `laravel`, `yii2`) is this package; in plain PHP it is three lines over
 [`indexnowkit/core`](https://github.com/indexnowkit/php/tree/main/packages/core).
 
+**Google: no.** Google does not support IndexNow, its sitemap ping endpoint is gone and the Indexing API is limited to
+`JobPosting` / `BroadcastEvent`. Keep your sitemap for Google; this package announces it to the IndexNow engines only.
+IndexNow is a notification, not indexing: the engine decides whether and when to crawl.
+
+A run without `--changed-since` re-announces the whole sitemap: do that once, then schedule `--changed-since "1 day"`.
+`--changed-since` relies on `<lastmod>`; a generator that writes `lastmod = now()` for every URL turns every run into a
+full run, and entries without `lastmod` are skipped when the option is set.
+
 [![Packagist](https://img.shields.io/packagist/v/indexnowkit/sitemap)](https://packagist.org/packages/indexnowkit/sitemap)
 [![CI](https://github.com/indexnowkit/php/actions/workflows/ci.yml/badge.svg)](https://github.com/indexnowkit/php/actions)
 ![PHP](https://img.shields.io/badge/php-%5E8.2-777bb4)
 
-[Русская версия](README.ru.md)
+[Русская версия](README.ru.md) · Issues and pull requests: [github.com/indexnowkit/php](https://github.com/indexnowkit/php/issues) (the `php-*` repositories are read-only splits)
 
 ## Install
 
