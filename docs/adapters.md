@@ -37,8 +37,8 @@ $exit = $runner->run($io, new SitemapOptions($argument, $changedSince, $allowFor
 - **Source.** Type the command against `SitemapSourceInterface` and expose the reader under an alias of it, so an
   application can decorate the source (filter, rewrite) or replace it. `--allow-foreign-hosts` only reaches the
   shipped `SitemapReader`; the runner warns when the configured source is something else.
-- **Output.** The runner streams, submits every `batch.max_urls` URLs through `Console\SubmitterFactory::choose()`
-  (`--force`/`--dry-run` get a separate submitter), folds results into `Console\ResultSummary`, and submits the
+- **Output.** The runner streams, submits every `batch.max_urls` URLs through `Adapter\SubmitterFactory::choose()`
+  (`--force`/`--dry-run` get a separate submitter), folds results into `Submission\ResultSummary`, and submits the
   pending batch before reporting a mid-run failure; `--json` keeps stdout machine-readable (the error goes to
   stderr). Exit codes are `Console\ExitCode`.
 - **Words.** The only framework-specific string is `sitemapUrlOption`, printed in

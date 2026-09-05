@@ -6,17 +6,17 @@ namespace IndexNowKit\Sitemap\Console;
 
 use DateTimeImmutable;
 use Exception;
+use IndexNowKit\Adapter\SubmitterFactory;
+use IndexNowKit\Adapter\SubmitterFactoryInterface;
 use IndexNowKit\Console\ExitCode;
 use IndexNowKit\Console\ResultFormatterInterface;
 use IndexNowKit\Console\ResultRenderer;
-use IndexNowKit\Console\ResultSummary;
-use IndexNowKit\Console\SubmitterFactory;
-use IndexNowKit\Console\SubmitterFactoryInterface;
 use IndexNowKit\Http\Exception\TransportException;
 use IndexNowKit\IndexNowKit;
 use IndexNowKit\Sitemap\SitemapEntry;
 use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SitemapSourceInterface;
+use IndexNowKit\Submission\ResultSummary;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**

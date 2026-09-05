@@ -5,6 +5,12 @@ contain breaking changes, listed under "Changed". What the compatibility promise
 
 ## [Unreleased]
 
+### Changed
+
+- Requires core 0.7: `Console\SubmitterFactory` / `Console\SubmitterFactoryInterface` are now
+  `IndexNowKit\Adapter\SubmitterFactory` / `IndexNowKit\Adapter\SubmitterFactoryInterface`, `Console\ResultSummary` is
+  `IndexNowKit\Submission\ResultSummary`. Application code that names them (a decorator of the `submitters` argument of `Console\\SitemapRunner`) changes the `use` line; nothing else.
+
 ### Documentation
 
 - README: "Notes for AI assistants" (package, minimal complete snippet, verification, pitfalls across the adapters);

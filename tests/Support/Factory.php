@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace IndexNowKit\Sitemap\Tests\Support;
 
+use IndexNowKit\Adapter\SubmitterFactory;
 use IndexNowKit\Attribute\AttributeReader;
 use IndexNowKit\Config;
-use IndexNowKit\Console\SubmitterFactory;
 use IndexNowKit\Debounce\MemoryDebounceStore;
 use IndexNowKit\IndexNowKit;
 use IndexNowKit\Testing\FakeTransport;
