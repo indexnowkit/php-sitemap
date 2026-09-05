@@ -29,8 +29,8 @@
     "require": {
         "php": "^8.2",
         "ext-xmlreader": "*",
-        "indexnowkit/console": "^0.1",
-        "indexnowkit/core": "^0.7",
+        "indexnowkit/console": "^0.2",
+        "indexnowkit/core": "^0.8",
         "psr/log": "^2.0 || ^3.0",
         "symfony/console": "^6.4 || ^7.0 || ^8.0"
     },
@@ -71,7 +71,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.3.x-dev"
+            "dev-main": "0.4.x-dev"
         }
     }
 }
