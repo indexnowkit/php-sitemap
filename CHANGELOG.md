@@ -11,6 +11,7 @@ contain breaking changes, listed under "Changed". What the compatibility promise
   `ReadmeAiNotesTest` keeps it consistent with the commands and configuration keys.
 - README: `--force` re-announces URLs inside the debounce window (one-off, not for schedules); `batch.max_urls` is a
   ceiling, not a target.
+- `homepage` in composer.json points at the docs site (https://indexnowkit.github.io/php/).
 
 ## [0.2.0] — 2026-09-05
 
