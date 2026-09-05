@@ -24,3 +24,5 @@ A sitemap is a document from the network that names other URLs. The reader:
 
 Only the URLs are taken from the document; they are then submitted under the keys of `hosts` / `key` like any
 other URL, with the core's normalization and host checks (`strict_hosts` applies).
+
+Reports are acknowledged within 5 business days; a fix or a mitigation plan follows within 30 days.

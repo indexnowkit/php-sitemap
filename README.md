@@ -15,8 +15,12 @@ A run without `--changed-since` re-announces the whole sitemap: do that once, th
 full run, and entries without `lastmod` are skipped when the option is set.
 
 [![Packagist](https://img.shields.io/packagist/v/indexnowkit/sitemap)](https://packagist.org/packages/indexnowkit/sitemap)
+[![Downloads](https://img.shields.io/packagist/dt/indexnowkit/sitemap)](https://packagist.org/packages/indexnowkit/sitemap)
 [![CI](https://github.com/indexnowkit/php/actions/workflows/ci.yml/badge.svg)](https://github.com/indexnowkit/php/actions)
+![Coverage](https://img.shields.io/badge/coverage-%E2%89%A5%2090%25%20enforced-brightgreen)
+![PHPStan](https://img.shields.io/badge/phpstan-level%209-4c1)
 ![PHP](https://img.shields.io/badge/php-%5E8.2-777bb4)
+[![License](https://img.shields.io/packagist/l/indexnowkit/sitemap)](LICENSE)
 
 [Русская версия](README.ru.md) · Issues and pull requests: [github.com/indexnowkit/php](https://github.com/indexnowkit/php/issues) (the `php-*` repositories are read-only splits)
 
@@ -100,7 +104,7 @@ An application decorates the source (filter, rewrite) or replaces it (another fo
 
 ## Requirements
 
-PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.4`; `ext-zlib` for gzip-compressed sitemaps; `symfony/console` for
+PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.6`; `ext-zlib` for gzip-compressed sitemaps; `symfony/console` for
 the command body.
 
 ## Versioning

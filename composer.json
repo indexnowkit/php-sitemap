@@ -29,7 +29,7 @@
     "require": {
         "php": "^8.2",
         "ext-xmlreader": "*",
-        "indexnowkit/core": "^0.5",
+        "indexnowkit/core": "^0.6",
         "psr/log": "^2.0 || ^3.0"
     },
     "require-dev": {
@@ -38,6 +38,7 @@
         "phpstan/phpstan-phpunit": "^2.0.18",
         "phpstan/phpstan-strict-rules": "^2.0.12",
         "phpunit/phpunit": "^11.5",
+        "roave/security-advisories": "dev-latest",
         "symfony/console": "^6.4 || ^7.0 || ^8.0",
         "symfony/http-client": "^6.4 || ^7.0"
     },
@@ -69,7 +70,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.1.x-dev"
+            "dev-main": "0.2.x-dev"
         }
     }
 }
