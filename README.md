@@ -94,7 +94,10 @@ logged and skipped; a failing root throws `Http\Exception\TransportException`, a
 
 `Sitemap\Console\SitemapRunner` is the body of `sitemap [url]` (`--changed-since "1 day"`, `--allow-foreign-hosts`,
 `--force`, `--dry-run`, `--json`); it streams, submits every `batch.max_urls` URLs, and submits the pending batch
-before reporting a mid-run failure (the re-run is idempotent, what was read is still worth announcing). The
+before reporting a mid-run failure (the re-run is idempotent, what was read is still worth announcing). `--force`
+ignores the debounce window (URLs announced within the last `debounce.per_url` seconds are sent again): for a
+deliberate one-off re-run, never in a schedule. `batch.max_urls` (10 000) is the protocol's ceiling, not a target:
+smaller batches are accepted just as well, and a scheduled run with `--changed-since` normally sends a few. The
 `check` command of every adapter carries `Sitemap\Check\SitemapSpoolCheck`: where documents are spooled, and whether
 that directory is writable — the kind of thing that otherwise only shows up on the first scheduled run.
 

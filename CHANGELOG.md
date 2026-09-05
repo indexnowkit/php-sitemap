@@ -9,6 +9,8 @@ contain breaking changes, listed under "Changed". What the compatibility promise
 
 - README: "Notes for AI assistants" (package, minimal complete snippet, verification, pitfalls across the adapters);
   `ReadmeAiNotesTest` keeps it consistent with the commands and configuration keys.
+- README: `--force` re-announces URLs inside the debounce window (one-off, not for schedules); `batch.max_urls` is a
+  ceiling, not a target.
 
 ## [0.2.0] — 2026-09-05
 
