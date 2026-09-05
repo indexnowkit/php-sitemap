@@ -17,6 +17,9 @@ use IndexNowKit\Sitemap\SpoolMode;
  */
 final class SitemapSpoolCheck implements CheckInterface
 {
+    /** The code of every line this check prints ({@see \IndexNowKit\Check\CheckItem::$code}). */
+    public const CODE = 'sitemap.spool';
+
     public function __construct(private readonly SitemapConfig $config) {}
 
     public function check(CheckReport $report): void
@@ -26,17 +29,17 @@ final class SitemapSpoolCheck implements CheckInterface
             return;
         }
         if ($config->spool === SpoolMode::Memory) {
-            $report->ok(\sprintf('sitemap: documents are spooled in memory (sitemap.spool: memory, at most %s per document)', self::bytes($config->maxBytes)));
+            $report->ok(\sprintf('sitemap: documents are spooled in memory (sitemap.spool: memory, at most %s per document)', self::bytes($config->maxBytes)), self::CODE);
 
             return;
         }
         $problem = Spool::probeDisk($config->spoolDir);
         if ($problem === null) {
-            $report->ok(\sprintf('sitemap: documents are spooled to temp files in %s', $config->spoolDir ?? sys_get_temp_dir()));
+            $report->ok(\sprintf('sitemap: documents are spooled to temp files in %s', $config->spoolDir ?? sys_get_temp_dir()), self::CODE);
         } elseif ($config->spool === SpoolMode::Disk) {
-            $report->error(\sprintf('sitemap: %s and sitemap.spool is "disk": the sitemap command will fail. Mount a writable volume, set sitemap.spool_dir, or use "auto" / "memory".', $problem));
+            $report->error(\sprintf('sitemap: %s and sitemap.spool is "disk": the sitemap command will fail. Mount a writable volume, set sitemap.spool_dir, or use "auto" / "memory".', $problem), self::CODE);
         } else {
-            $report->warning(\sprintf('sitemap: %s: the sitemap command will spool documents in memory (at most %s each). Mount a writable temp dir or set sitemap.spool_dir.', $problem, self::bytes($config->maxBytes)));
+            $report->warning(\sprintf('sitemap: %s: the sitemap command will spool documents in memory (at most %s each). Mount a writable temp dir or set sitemap.spool_dir.', $problem, self::bytes($config->maxBytes)), self::CODE);
         }
     }
 

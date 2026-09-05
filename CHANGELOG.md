@@ -3,6 +3,12 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: SemVer; until 1.0 minor versions may
 contain breaking changes, listed under "Changed". What the compatibility promise covers: [docs/bc.md](docs/bc.md).
 
+## [Unreleased]
+
+### Added
+
+- `Check\SitemapSpoolCheck` lines carry the code `sitemap.spool` (`SitemapSpoolCheck::CODE`; core 0.8 `check --json`).
+
 ## [0.3.0] — 2026-09-06
 
 ### Changed
