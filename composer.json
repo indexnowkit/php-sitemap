@@ -29,10 +29,11 @@
     "require": {
         "php": "^8.2",
         "ext-xmlreader": "*",
-        "indexnowkit/core": "^0.6",
+        "indexnowkit/core": "^0.7",
         "psr/log": "^2.0 || ^3.0"
     },
     "require-dev": {
+        "indexnowkit/testing": "^0.1",
         "nyholm/psr7": "^1.8",
         "phpstan/phpstan": "^2.2.13",
         "phpstan/phpstan-phpunit": "^2.0.18",
