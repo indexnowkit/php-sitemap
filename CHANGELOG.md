@@ -12,6 +12,9 @@ contain breaking changes, listed under "Changed". What the compatibility promise
   `IndexNowKit\Submission\ResultSummary`. Application code that names them (a decorator of the `submitters` argument of `Console\\SitemapRunner`) changes the `use` line; nothing else.
 - The test suite requires `indexnowkit/testing ^0.1` (`require-dev`): the conformance kits and the H01–H05 assertions
   moved there from the core (`Testing\Conformance\KeyFileAssertions`, `CheckOutputAssertions`, `ReadmeAssertions`).
+- Requires `indexnowkit/console ^0.1` and `symfony/console`: the runners and the formatter `Console\SitemapRunner`
+  builds on moved there from the core with their FQCN unchanged, and the runner renders through `SymfonyStyle` like
+  every command body of the family; `symfony/console` leaves `suggest` (it is a requirement now).
 
 ### Documentation
 

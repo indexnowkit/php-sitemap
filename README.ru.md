@@ -96,7 +96,8 @@ submitter'а: тогда `Http\TransportFactory::lazy($kit->config)`.
 
 ## Требования
 
-PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.4`; `ext-zlib` для gzip; `symfony/console` для тела команды.
+PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.7`, `indexnowkit/console ^0.1` (тело команды печатает через
+`symfony/console`); `ext-zlib` для gzip.
 
 ## Заметки для AI-ассистентов
 

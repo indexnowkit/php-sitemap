@@ -29,8 +29,10 @@
     "require": {
         "php": "^8.2",
         "ext-xmlreader": "*",
+        "indexnowkit/console": "^0.1",
         "indexnowkit/core": "^0.7",
-        "psr/log": "^2.0 || ^3.0"
+        "psr/log": "^2.0 || ^3.0",
+        "symfony/console": "^6.4 || ^7.0 || ^8.0"
     },
     "require-dev": {
         "indexnowkit/testing": "^0.1",
@@ -40,12 +42,10 @@
         "phpstan/phpstan-strict-rules": "^2.0.12",
         "phpunit/phpunit": "^11.5",
         "roave/security-advisories": "dev-latest",
-        "symfony/console": "^6.4 || ^7.0 || ^8.0",
         "symfony/http-client": "^6.4 || ^7.0"
     },
     "suggest": {
-        "ext-zlib": "Reading gzip-compressed sitemaps",
-        "symfony/console": "Console\\SitemapRunner: the body of the sitemap command used by the framework adapters"
+        "ext-zlib": "Reading gzip-compressed sitemaps"
     },
     "autoload": {
         "psr-4": {

@@ -14,5 +14,6 @@
 Not covered: `Spool`'s `stream_*` methods (the PHP stream-wrapper protocol, `@internal`), log and exception message
 texts, anything under `tests/`.
 
-Adapters pin `indexnowkit/sitemap ^0.1` and `indexnowkit/core ^0.4` together: a `SitemapReader` of this package
-over a core 0.3 transport is refused by Composer, on purpose (the FQCN would clash with the classes core 0.3 still ships).
+Adapters pin `indexnowkit/sitemap`, `indexnowkit/core` and `indexnowkit/console` together: a `SitemapReader` of this
+package over an older core is refused by Composer, on purpose (0.1 clashed with the classes core 0.3 still shipped;
+0.3 needs the `Adapter\SubmitterFactory` of core 0.7 and the runners of `indexnowkit/console`).

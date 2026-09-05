@@ -107,8 +107,8 @@ An application decorates the source (filter, rewrite) or replaces it (another fo
 
 ## Requirements
 
-PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.6`; `ext-zlib` for gzip-compressed sitemaps; `symfony/console` for
-the command body.
+PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.7`, `indexnowkit/console ^0.1` (the command body renders through
+`symfony/console`); `ext-zlib` for gzip-compressed sitemaps.
 
 ## Notes for AI assistants
 
