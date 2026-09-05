@@ -29,13 +29,13 @@
     "require": {
         "php": "^8.2",
         "ext-xmlreader": "*",
-        "indexnowkit/console": "^0.2",
-        "indexnowkit/core": "^0.8",
+        "indexnowkit/console": "^0.3",
+        "indexnowkit/core": "^0.9",
         "psr/log": "^2.0 || ^3.0",
         "symfony/console": "^6.4 || ^7.0 || ^8.0"
     },
     "require-dev": {
-        "indexnowkit/testing": "^0.1",
+        "indexnowkit/testing": "^0.2",
         "nyholm/psr7": "^1.8",
         "phpstan/phpstan": "^2.2.13",
         "phpstan/phpstan-phpunit": "^2.0.18",
@@ -71,7 +71,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.4.x-dev"
+            "dev-main": "0.5.x-dev"
         }
     }
 }
