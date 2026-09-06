@@ -108,6 +108,13 @@ An application decorates the source (filter, rewrite) or replaces it (another fo
 `Sitemap\SitemapSourceInterface` and binding it under the adapter's alias. Writing an adapter?
 [docs/adapters.md](docs/adapters.md).
 
+## For adapter authors
+
+`Sitemap\Adapter\SitemapServices` is what a framework adapter wires for this package, in one place: the predicate (`package()`), the owned
+options, the validated block, the reader, the spool check, the body of the `sitemap` command — as static functions over the pieces, with `*For()` twins over the core's
+`Adapter\Services` for a runtime graph. The Symfony bundle, the Laravel and the Yii2 adapters build on it; see
+[adapters.md](https://github.com/indexnowkit/php-core/blob/main/docs/adapters.md) of the core.
+
 ## Requirements
 
 PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.7`, `indexnowkit/console ^0.1` (the command body renders through

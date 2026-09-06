@@ -3,6 +3,13 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: SemVer; until 1.0 minor versions may
 contain breaking changes, listed under "Changed". What the compatibility promise covers: [docs/bc.md](docs/bc.md).
 
+## [0.7.0] — Unreleased
+
+### Added
+
+- **`Sitemap\Adapter\SitemapServices`** — what every framework adapter wires for this package, in one place: `package()`,
+  `options()`, `config()`, `reader()` / `readerFor()`, `spoolCheck()`, `runner()`. The three adapters build on it.
+
 ## [0.6.1] — 2026-09-07
 
 ### Changed

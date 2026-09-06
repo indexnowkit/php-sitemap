@@ -94,6 +94,13 @@ submitter'а: тогда `Http\TransportFactory::lazy($kit->config)`.
 `Sitemap\SitemapSourceInterface` и привязывая под алиасом адаптера. Пишете адаптер?
 [docs/adapters.md](docs/adapters.md).
 
+## Авторам адаптеров
+
+`Sitemap\Adapter\SitemapServices` — всё, что адаптер фреймворка подключает для этого пакета, в одном месте: предикат (`package()`), свои опции,
+проверенный блок, ридер, проверку спула, тело команды `sitemap` — статические функции над частями, с двойниками `*For()` поверх
+`Adapter\Services` ядра для рантайм-графа. Symfony-бандл, адаптеры Laravel и Yii2 построены на нём; см.
+[adapters.md](https://github.com/indexnowkit/php-core/blob/main/docs/adapters.md) ядра.
+
 ## Требования
 
 PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.7`, `indexnowkit/console ^0.1` (тело команды печатает через
