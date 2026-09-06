@@ -3,6 +3,19 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: SemVer; until 1.0 minor versions may
 contain breaking changes, listed under "Changed". What the compatibility promise covers: [docs/bc.md](docs/bc.md).
 
+## [0.6.0] — Unreleased
+
+### Changed
+
+- The libxml error buffer is cleared before a sitemap is parsed: an error another library left in the process
+  (`DOMDocument::loadHTML`, a SOAP client) was read as this sitemap's and a correct file was refused.
+- `<lastmod>` without a time zone (`2026-09-06`) is UTC, not the process time zone; an unparsable `<lastmod>` is a debug
+  line naming the URL instead of silence.
+- A nested sitemap on the same host with an explicit default port (`https://x.com:443`) is the same origin.
+- A local sitemap index may only reference local parts inside its own directory (`<loc>/etc/passwd</loc>` was read and
+  echoed line by line into the log as a "text sitemap").
+- Requires `indexnowkit/core ^0.11`.
+
 ## [0.5.1] — 2026-09-06
 
 ### Changed

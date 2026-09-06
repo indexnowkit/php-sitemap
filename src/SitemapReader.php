@@ -7,6 +7,7 @@ namespace IndexNowKit\Sitemap;
 use Closure;
 use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 use Exception;
 use Generator;
 use IndexNowKit\Http\Exception\TransportException;
@@ -129,7 +130,7 @@ final class SitemapReader implements SitemapSourceInterface
         try {
             foreach ($this->entries($file, $source) as [$kind, $loc, $lastmod]) {
                 if ($kind === 'url') {
-                    $entry = self::entry($loc, $lastmod, $changedSince);
+                    $entry = $this->entry($loc, $lastmod, $changedSince, $source);
                     if ($entry !== null) {
                         yield $entry;
                     }
@@ -162,7 +163,7 @@ final class SitemapReader implements SitemapSourceInterface
         try {
             foreach ($this->entries($file, $url) as [$kind, $loc, $lastmod]) {
                 if ($kind === 'url') {
-                    $entry = self::entry($loc, $lastmod, $changedSince);
+                    $entry = $this->entry($loc, $lastmod, $changedSince, $url);
                     if ($entry !== null) {
                         yield $entry;
                     }
@@ -186,6 +187,10 @@ final class SitemapReader implements SitemapSourceInterface
                     }
                     if (self::localPath($loc) === null && !$allowForeignHosts) {
                         $this->logger->warning('indexnow: local sitemap index {root} references {url}; give the index by URL, or allow foreign hosts to fetch its parts', ['url' => $shown, 'root' => $root]);
+                        continue;
+                    }
+                    if (self::localPath($loc) !== null && !self::withinIndexDirectory($loc, $root)) {
+                        $this->logger->warning('indexnow: local sitemap index {root} references {url} outside its own directory, skipping', ['url' => $shown, 'root' => $root]);
                         continue;
                     }
                 } elseif (!self::isHttpUrl($loc)) {
@@ -305,6 +310,7 @@ final class SitemapReader implements SitemapSourceInterface
         $inflated = $this->gunzip($file, $source); // the gzip spool is closed by gunzip(); the inflated one is ours to close
         $owned = $inflated !== $file;
         $previous = libxml_use_internal_errors(true);
+        libxml_clear_errors(); // the buffer is process-wide: an error another library left behind must not be read as this sitemap's
         try {
             $size = self::sizeOf($inflated);
             if ($size > $this->maxXmlBytes) {
@@ -486,12 +492,15 @@ final class SitemapReader implements SitemapSourceInterface
         return $out;
     }
 
-    private static function entry(string $loc, string $lastmodRaw, ?DateTimeImmutable $changedSince): ?SitemapEntry
+    private function entry(string $loc, string $lastmodRaw, ?DateTimeImmutable $changedSince, string $source): ?SitemapEntry
     {
         $lastmod = null;
         if ($lastmodRaw !== '') {
             $atom = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $lastmodRaw);
             $lastmod = $atom === false ? self::parseDate($lastmodRaw) : $atom;
+            if ($lastmod === null) {
+                $this->logger->debug('indexnow: sitemap {source}: <lastmod>{lastmod}</lastmod> of {url} is not a date (W3C datetime expected), treated as unknown', ['source' => $source, 'lastmod' => self::loggable($lastmodRaw), 'url' => self::loggable($loc)]);
+            }
         }
         if ($changedSince !== null && ($lastmod === null || $lastmod < $changedSince)) {
             return null;
@@ -518,18 +527,34 @@ final class SitemapReader implements SitemapSourceInterface
             return false;
         }
 
-        return strtolower($a['scheme']) === strtolower($b['scheme'] ?? 'https')
+        $schemeA = strtolower($a['scheme']);
+        $schemeB = strtolower($b['scheme'] ?? 'https');
+
+        return $schemeA === $schemeB
             && strtolower($a['host']) === strtolower($b['host'])
-            && ($a['port'] ?? null) === ($b['port'] ?? null);
+            && ($a['port'] ?? ($schemeA === 'https' ? 443 : 80)) === ($b['port'] ?? ($schemeB === 'https' ? 443 : 80)); // an explicit default port is the same origin
     }
 
+    /** The other W3C datetime forms (`2026-09-06`, `2026-09-06T10:00Z`, …); a value without a zone designator is UTC, not the process time zone. */
     private static function parseDate(string $raw): ?DateTimeImmutable
     {
         try {
-            return new DateTimeImmutable($raw);
+            return new DateTimeImmutable($raw, new DateTimeZone('UTC'));
         } catch (Exception) {
             return null;
         }
+    }
+
+    /** Whether a local part of a local sitemap index lies in the directory of the index (or below): `/etc/passwd` in a `<loc>` is not a sitemap. */
+    private static function withinIndexDirectory(string $loc, string $root): bool
+    {
+        $rootDir = realpath(\dirname((string) preg_replace('#^file://#', '', $root)));
+        $target = realpath((string) preg_replace('#^file://#', '', $loc));
+        if ($rootDir === false || $target === false) {
+            return false;
+        }
+
+        return $target === $rootDir || str_starts_with($target, rtrim($rootDir, \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR);
     }
 
     /**
