@@ -6,6 +6,7 @@ namespace IndexNowKit\Sitemap\Tests\Support;
 
 use IndexNowKit\Adapter\SubmitterFactory;
 use IndexNowKit\Attribute\AttributeReader;
+use IndexNowKit\Attribute\ParamExtractor;
 use IndexNowKit\Config;
 use IndexNowKit\Debounce\MemoryDebounceStore;
 use IndexNowKit\IndexNowKit;
@@ -36,7 +37,7 @@ final class Factory
      */
     public static function kit(FakeTransport $transport, array $overrides = []): IndexNowKit
     {
-        return IndexNowKit::create(self::config($overrides), $transport, resolver: new AttributeUrlResolver(new AttributeReader()));
+        return IndexNowKit::create(self::config($overrides), $transport, resolver: new AttributeUrlResolver(new AttributeReader(), ParamExtractor::plain()));
     }
 
     public static function submitters(FakeTransport $transport, IndexNowKit $kit): SubmitterFactory
