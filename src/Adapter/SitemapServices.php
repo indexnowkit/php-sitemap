@@ -11,6 +11,7 @@ use IndexNowKit\Console\ResultFormatterInterface;
 use IndexNowKit\Http\TransportInterface;
 use IndexNowKit\IndexNowKit;
 use IndexNowKit\Sitemap\Check\SitemapSpoolCheck;
+use IndexNowKit\Sitemap\Console\SitemapCommand;
 use IndexNowKit\Sitemap\Console\SitemapRunner;
 use IndexNowKit\Sitemap\SitemapConfig;
 use IndexNowKit\Sitemap\SitemapReader;
@@ -75,13 +76,20 @@ final class SitemapServices
     }
 
     /**
-     * The body of the `sitemap` command.
+     * The body of the `sitemap` command: `sitemap.url` and `sitemap.enabled` from the block (an adapter that keeps the
+     * command registered while the block is off gets the `sitemap.enabled is false.` answer from the runner).
      *
      * @param string                        $sitemapUrlOption the adapter's name of `sitemap.url` in its error texts (`indexnow.sitemap.url`, `sitemap.url`)
      * @param SubmitterFactoryInterface|null $unverified      the plain command submitter factory for `--no-verify` (null = the same as $submitters)
      */
     public static function runner(IndexNowKit $indexNow, SitemapSourceInterface $source, SubmitterFactoryInterface $submitters, SitemapConfig $config, ResultFormatterInterface $formatter, string $sitemapUrlOption, ?SubmitterFactoryInterface $unverified): SitemapRunner
     {
-        return new SitemapRunner($indexNow, $source, $submitters, $config->url, $formatter, $sitemapUrlOption, $unverified);
+        return new SitemapRunner($indexNow, $source, $submitters, $config->url, $formatter, $sitemapUrlOption, $unverified, $config->enabled);
+    }
+
+    /** The `sitemap` command over {@see runner()} (or over a runner the adapter built itself). */
+    public static function command(SitemapRunner $runner, string $sitemapUrlOption = 'sitemap.url'): SitemapCommand
+    {
+        return new SitemapCommand($runner, $sitemapUrlOption);
     }
 }

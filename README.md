@@ -120,13 +120,13 @@ An application decorates the source (filter, rewrite) or replaces it (another fo
 ## For adapter authors
 
 `Sitemap\Adapter\SitemapServices` is what a framework adapter wires for this package, in one place: the predicate (`package()`), the owned
-options, the validated block, the reader, the spool check, the body of the `sitemap` command — as static functions over the pieces, with `*For()` twins over the core's
+options, the validated block, the reader, the spool check, the body of the `sitemap` command (`runner()`) and the command itself (`command()`: `Sitemap\Console\SitemapCommand`, the class an adapter on symfony/console registers instead of writing one) — as static functions over the pieces, with `*For()` twins over the core's
 `Adapter\Services` for a runtime graph. The Symfony bundle, the Laravel, the Yii2 and the Yii3 adapters build on it; see
 [adapters.md](https://github.com/indexnowkit/php-core/blob/main/docs/adapters.md) of the core.
 
 ## Requirements
 
-PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.7`, `indexnowkit/console ^0.1` (the command body renders through
+PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.13`, `indexnowkit/console ^0.5` (the command and its body render through
 `symfony/console`); `ext-zlib` for gzip-compressed sitemaps.
 
 ## Notes for AI assistants

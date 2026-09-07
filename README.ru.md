@@ -106,13 +106,13 @@ submitter'а: тогда `Http\TransportFactory::lazy($kit->config)`.
 ## Авторам адаптеров
 
 `Sitemap\Adapter\SitemapServices` — всё, что адаптер фреймворка подключает для этого пакета, в одном месте: предикат (`package()`), свои опции,
-проверенный блок, ридер, проверку спула, тело команды `sitemap` — статические функции над частями, с двойниками `*For()` поверх
+проверенный блок, ридер, проверку спула, тело команды `sitemap` (`runner()`) и саму команду (`command()`: `Sitemap\Console\SitemapCommand` — класс, который адаптер на symfony/console регистрирует вместо своего) — статические функции над частями, с двойниками `*For()` поверх
 `Adapter\Services` ядра для рантайм-графа. Symfony-бандл, адаптеры Laravel и Yii2 построены на нём; см.
 [adapters.md](https://github.com/indexnowkit/php-core/blob/main/docs/adapters.md) ядра.
 
 ## Требования
 
-PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.7`, `indexnowkit/console ^0.1` (тело команды печатает через
+PHP 8.2+, `ext-xmlreader`, `indexnowkit/core ^0.13`, `indexnowkit/console ^0.5` (команда и её тело печатают через
 `symfony/console`); `ext-zlib` для gzip.
 
 ## Заметки для AI-ассистентов

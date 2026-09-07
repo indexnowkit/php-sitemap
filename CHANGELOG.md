@@ -5,7 +5,22 @@ contain breaking changes, listed under "Changed". What the compatibility promise
 
 ## [0.8.0] — Unreleased
 
+### Added
+
+- **`Console\SitemapCommand`** (wave L, spec 18): the `indexnow:sitemap` command itself as a symfony/console class over
+  `Console\SitemapRunner`, with `#[AsCommand]`; `Sitemap\Adapter\SitemapServices::command($runner, $sitemapUrlOption)`
+  builds it. The Symfony bundle and the Yii3 package register this class instead of a copy of their own; an adapter
+  without the package registers `Console\Command\SitemapNotInstalledCommand` of `indexnowkit/console` under the same
+  name. Constructor: `(SitemapRunner $runner, string $sitemapUrlOption = 'sitemap.url')` — the second names the
+  adapter's `sitemap.url` option in the help.
+- **`Console\SitemapRunner` takes `bool $enabled = true`** (appended) and answers `sitemap.enabled is false.` with exit 2
+  when it is off; `SitemapServices::runner()` passes `SitemapConfig::$enabled`. Before, the Yii3 command checked the flag
+  itself and the bundle registered no command at all (it still does); the one place is now the runner, whatever the
+  adapter chose.
+
 ### Changed
+
+- Requires `indexnowkit/console ^0.5` (the command classes and the stubs live there).
 
 - **A `<loc>` on a host this site has no key for is dropped** (`Console\SitemapRunner`), before anything fetches or
   submits it: only the hosts `KeyProviderInterface::managedHosts()` names — `base_url` plus the `hosts` map — pass,

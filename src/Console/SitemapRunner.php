@@ -40,6 +40,9 @@ final class SitemapRunner
      * @param SubmitterFactoryInterface|null $unverifiedSubmitters the plain factory `--no-verify` submits through when the adapter
      *                                                             decorated `$submitters` with the pre-flight of indexnowkit/verify;
      *                                                             null = `$submitters` (the flag then changes nothing)
+     * @param bool                           $enabled              `sitemap.enabled` ({@see \IndexNowKit\Sitemap\SitemapConfig::$enabled}): false = the command
+     *                                                             answers `sitemap.enabled is false.` and INVALID without reading anything (an
+     *                                                             adapter that registers no command at all when it is off never gets here)
      */
     public function __construct(
         private readonly IndexNowKit $indexNow,
@@ -49,6 +52,7 @@ final class SitemapRunner
         private readonly ResultFormatterInterface $formatter = new ResultRenderer(),
         private readonly string $sitemapUrlOption = 'sitemap.url',
         private readonly ?SubmitterFactoryInterface $unverifiedSubmitters = null,
+        private readonly bool $enabled = true,
     ) {}
 
     /**
@@ -56,6 +60,11 @@ final class SitemapRunner
      */
     public function run(SymfonyStyle $io, SitemapOptions $options): int
     {
+        if (!$this->enabled) {
+            $io->error('sitemap.enabled is false.');
+
+            return ExitCode::INVALID;
+        }
         $json = $options->json;
         $sitemap = $this->sitemapUrl($options->sitemap);
         if ($sitemap === null) {
