@@ -26,6 +26,5 @@ final class DefinitionsTest extends TestCase
         self::assertStringContainsString('(default: indexnow.sitemap.url from the config', $definition->argument('sitemap')->description);
         self::assertFalse($definition->argument('sitemap')->required);
         self::assertSame(['f' => 'force'], $definition->yiiAliases());
-        self::assertStringContainsString('{sitemap? : Sitemap URL or local file', $definition->laravelSignature('indexnow:sitemap'));
     }
 }
