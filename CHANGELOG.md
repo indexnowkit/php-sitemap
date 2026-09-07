@@ -3,6 +3,15 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: SemVer; until 1.0 minor versions may
 contain breaking changes, listed under "Changed". What the compatibility promise covers: [docs/bc.md](docs/bc.md).
 
+## [0.7.1] — Unreleased
+
+### Changed
+
+- `Sitemap\Adapter\SitemapServices::package()` delegates to the core's `Adapter\OptionalPackage::sitemap()` (core
+  0.13.0): the name, the marker and the feature word live there, so an adapter asks about the package without loading
+  this class. Same object, same texts; adapters should call `OptionalPackage::sitemap()` directly.
+- Requires `indexnowkit/core ^0.13`.
+
 ## [0.7.0] — 2026-09-07
 
 ### Added
