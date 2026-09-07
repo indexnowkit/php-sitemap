@@ -11,6 +11,7 @@ use IndexNowKit\Sitemap\Check\SitemapSpoolCheck;
 use IndexNowKit\Sitemap\Console\SitemapRunner;
 use IndexNowKit\Sitemap\SitemapConfig;
 use IndexNowKit\Sitemap\SitemapReader;
+use IndexNowKit\Sitemap\Tests\Support\ArraySeenStore;
 use IndexNowKit\Sitemap\Tests\Support\Factory;
 use IndexNowKit\Testing\ArrayLogger;
 use IndexNowKit\Testing\FakeTransport;
@@ -40,5 +41,6 @@ final class AdapterServicesTest extends TestCase
         self::assertInstanceOf(SitemapReader::class, SitemapServices::reader($sitemap, $transport, $logger));
         self::assertInstanceOf(SitemapSpoolCheck::class, SitemapServices::spoolCheck($sitemap));
         self::assertInstanceOf(SitemapRunner::class, SitemapServices::runner($services->kit(), SitemapServices::readerFor($sitemap, $services), $services->submitterFactory(), $sitemap, new ResultRenderer(), 'sitemap.url', null));
+        self::assertInstanceOf(SitemapRunner::class, SitemapServices::runner($services->kit(), SitemapServices::readerFor($sitemap, $services), $services->submitterFactory(), $sitemap, new ResultRenderer(), 'sitemap.url', null, seen: new ArraySeenStore()), 'the store of seen URLs is the appended, named argument');
     }
 }

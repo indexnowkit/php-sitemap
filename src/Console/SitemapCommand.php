@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * `indexnow:sitemap [sitemap] [--changed-since=] [--allow-foreign-hosts] [-f|--force] [--dry-run] [--json] [--no-verify]`:
+ * `indexnow:sitemap [sitemap] [--changed-since=] [--allow-foreign-hosts] [-f|--force] [--dry-run] [--json] [--no-verify] [--new-only]`:
  * streams a sitemap (or sitemap index) and submits it in batches of `batch.max_urls`. The command every adapter on
  * symfony/console registers (wave L, spec 18): the adapter builds the {@see SitemapRunner} — the source under
  * `SitemapSourceInterface` (the shipped reader, or the application's decorator), the submitter factories, the
@@ -47,6 +47,7 @@ final class SitemapCommand extends Command
             dryRun: (bool) $input->getOption('dry-run'),
             json: (bool) $input->getOption('json'),
             noVerify: (bool) $input->getOption('no-verify'),
+            newOnly: (bool) $input->getOption('new-only'),
         ));
     }
 }

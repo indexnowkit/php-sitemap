@@ -15,6 +15,7 @@ final class SitemapOptions
      * @param bool        $allowForeignHosts follow nested sitemaps hosted on another origin for this run
      * @param bool        $dryRun            list the URLs without submitting
      * @param bool        $noVerify          submit through the plain submitter factory, past the pre-flight of indexnowkit/verify
+     * @param bool        $newOnly           only the URLs the store of seen URLs does not know, or knows with another lastmod
      */
     public function __construct(
         public readonly ?string $sitemap = null,
@@ -24,5 +25,6 @@ final class SitemapOptions
         public readonly bool $dryRun = false,
         public readonly bool $json = false,
         public readonly bool $noVerify = false,
+        public readonly bool $newOnly = false,
     ) {}
 }

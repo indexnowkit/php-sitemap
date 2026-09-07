@@ -16,6 +16,7 @@ use IndexNowKit\Sitemap\SitemapConfig;
 use IndexNowKit\Sitemap\SitemapEntry;
 use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SitemapSourceInterface;
+use IndexNowKit\Sitemap\Tests\Support\ArraySeenStore;
 use IndexNowKit\Sitemap\Tests\Support\Factory;
 use IndexNowKit\SubmitterInterface;
 use IndexNowKit\Testing\FakeTransport;
@@ -292,6 +293,80 @@ final class SitemapRunnerTest extends TestCase
             self::assertStringContainsString('No host can be derived from base_url or the hosts map', $display);
         } finally {
             @unlink($file);
+        }
+    }
+
+    #[TestDox('--new-only without a store of seen URLs is INVALID with one sentence; nothing is read')]
+    public function testNewOnlyWithoutStore(): void
+    {
+        $runner = $this->runner($this->kit());
+
+        self::assertSame(ExitCode::INVALID, $runner->run($this->io(), new SitemapOptions('https://www.example.com/sitemap.xml', newOnly: true)));
+        self::assertStringContainsString('--new-only needs a store of seen URLs', $this->output->fetch());
+        self::assertSame([], $this->transport->gets, 'nothing fetched');
+    }
+
+    #[TestDox('--new-only with a store: the second run submits nothing, a changed lastmod or a new URL is submitted again; the store learns from every run that is not --dry-run, failed batches excepted')]
+    public function testNewOnlyWithStore(): void
+    {
+        $kit = $this->kit(['batch' => ['max_urls' => 1]]);
+        $reader = SitemapReader::fromConfig(SitemapConfig::fromArray(['spool' => 'memory', 'fetch_retries' => 0]), $this->transport);
+        $seen = new ArraySeenStore();
+        $runner = new SitemapRunner($kit, $reader, Factory::submitters($this->transport, $kit), seen: $seen);
+        $file = $this->sitemapFile(self::URLSET . '<url><loc>https://www.example.com/a</loc><lastmod>2026-01-01</lastmod></url><url><loc>https://www.example.com/b</loc></url></urlset>');
+        try {
+            // --dry-run lists what is new and remembers nothing
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($file, newOnly: true, dryRun: true)));
+            $display = $this->output->fetch();
+            self::assertStringContainsString(' * https://www.example.com/a', $display);
+            self::assertStringContainsString('2 URL(s) found in', $display);
+            self::assertStringContainsString(', 2 new or changed', $display);
+            self::assertSame([], $seen->remembered, '--dry-run remembers nothing');
+
+            // the first real run: both are new, one batch per URL, both remembered
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($file, newOnly: true)));
+            $display = $this->output->fetch();
+            self::assertSame(['https://www.example.com/a', 'https://www.example.com/b'], $this->sentUrls());
+            self::assertStringContainsString('2 URL(s) found in', $display);
+            self::assertStringContainsString(', 2 new or changed', $display);
+            self::assertSame([['https://www.example.com/a'], ['https://www.example.com/b']], $seen->remembered, 'one remember() per batch');
+
+            // the second run: nothing new
+            $this->transport->posts = [];
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($file, newOnly: true)));
+            $display = $this->output->fetch();
+            self::assertSame([], $this->transport->posts, 'nothing is new: nothing sent');
+            self::assertStringContainsString('2 URL(s) found in', $display);
+            self::assertStringContainsString(', 0 new or changed', $display);
+            self::assertStringContainsString('Nothing submitted', $display);
+        } finally {
+            @unlink($file);
+        }
+
+        // a changed lastmod of one entry: that one is new again; the one without lastmod stays known
+        $changed = $this->sitemapFile(self::URLSET . '<url><loc>https://www.example.com/a</loc><lastmod>2026-02-01</lastmod></url><url><loc>https://www.example.com/b</loc></url><url><loc>https://www.example.com/c</loc></url></urlset>');
+        try {
+            $this->transport->posts = [];
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($changed, newOnly: true)));
+            self::assertSame(['https://www.example.com/a', 'https://www.example.com/c'], $this->sentUrls(), 'the changed lastmod and the new URL');
+            self::assertStringContainsString(', 2 new or changed', $this->output->fetch());
+
+            // a run without --new-only still teaches the store (a full run, then --new-only in cron); a failed batch is not remembered
+            $seen->seen = [];
+            $seen->remembered = [];
+            $this->transport->posts = [];
+            $this->transport->willRespond(new Response(200), new Response(500, 'oops'), new Response(200));
+            self::assertSame(ExitCode::FAILURE, $runner->run($this->io(), new SitemapOptions($changed)));
+            self::assertCount(3, $this->transport->posts, 'without the option every URL goes');
+            self::assertSame([['https://www.example.com/a'], ['https://www.example.com/c']], $seen->remembered, 'the batch that failed (b) is not remembered: it is announced again next time');
+
+            // --changed-since and --new-only add up: the window first, then the store
+            $this->transport->posts = [];
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($changed, newOnly: true, changedSince: '2026-01-15')));
+            self::assertSame([], $this->transport->posts, 'a (lastmod 2026-02-01) passes the window and is known already: nothing sent');
+            self::assertCount(2, $seen->remembered, 'nothing new was remembered');
+        } finally {
+            @unlink($changed);
         }
     }
 

@@ -47,6 +47,14 @@ $exit = $runner->run($io, new SitemapOptions($argument, $changedSince, $allowFor
   stderr). Exit codes are `Console\ExitCode` of `indexnowkit/console`.
 - **Words.** The only framework-specific string is `sitemapUrlOption`, printed in
   `Give a sitemap URL, or configure <option> or base_url.` when no sitemap is known.
+- **`--new-only` and the store of seen URLs.** The option is declared for every adapter (`Definitions::sitemap()`),
+  the behaviour needs a `SeenStoreInterface` (`unseen()` streams the entries whose fingerprint — URL plus `<lastmod>`,
+  or none — is unknown or changed; `remember()` records a batch). Pass one as the named `seen:` argument of
+  `SitemapRunner` / `SitemapServices::runner()`; without it the option answers
+  `SitemapRunner::NO_SEEN_STORE` with exit 2, and nothing is read. The runner remembers every batch whose results did
+  not fail, with or without the option, never with `--dry-run`. The `indexnow` CLI keeps the store in its sqlite
+  state file (`indexnow_sitemap_seen`: `url`, `fingerprint`, `seen_at`); the framework adapters do not ship one yet
+  — a PSR-16 store would lose fingerprints at TTL, so it will be a table over the adapter's connection, when asked for.
 
 The reference wiring: `IndexNowKitLoader` of the Symfony bundle (services `indexnowkit.sitemap_config`,
 `indexnowkit.sitemap_reader`, `indexnowkit.console.sitemap`), `IndexNowKitServiceProvider::registerDiagnostics()`

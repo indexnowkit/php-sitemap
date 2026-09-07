@@ -68,8 +68,18 @@ final class SitemapCommandTest extends TestCase
         self::assertSame(['sitemap'], array_keys($command->getDefinition()->getArguments()));
         self::assertFalse($command->getDefinition()->getArgument('sitemap')->isRequired());
         self::assertStringContainsString('indexnowkit.sitemap.url', $command->getDefinition()->getArgument('sitemap')->getDescription());
-        self::assertSame(['changed-since', 'allow-foreign-hosts', 'force', 'dry-run', 'json', 'no-verify'], array_keys($command->getDefinition()->getOptions()));
+        self::assertSame(['changed-since', 'allow-foreign-hosts', 'force', 'dry-run', 'json', 'no-verify', 'new-only'], array_keys($command->getDefinition()->getOptions()));
         self::assertSame('f', $command->getDefinition()->getOption('force')->getShortcut());
+    }
+
+    #[TestDox('--new-only reaches the runner: without a store of seen URLs it is INVALID with the sentence naming the store')]
+    public function testNewOnly(): void
+    {
+        $tester = $this->command();
+
+        self::assertSame(ExitCode::INVALID, $tester->execute(['sitemap' => 'https://www.example.com/sitemap.xml', '--new-only' => true]));
+        self::assertStringContainsString('--new-only needs a store of seen URLs', $tester->getDisplay());
+        self::assertSame([], $this->transport->gets);
     }
 
     #[TestDox('the sitemap argument, --changed-since, --dry-run and --json reach the runner; no argument reads <base_url>/sitemap.xml or the default of the config')]

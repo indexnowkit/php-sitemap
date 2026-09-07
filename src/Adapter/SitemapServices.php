@@ -13,6 +13,7 @@ use IndexNowKit\IndexNowKit;
 use IndexNowKit\Sitemap\Check\SitemapSpoolCheck;
 use IndexNowKit\Sitemap\Console\SitemapCommand;
 use IndexNowKit\Sitemap\Console\SitemapRunner;
+use IndexNowKit\Sitemap\SeenStoreInterface;
 use IndexNowKit\Sitemap\SitemapConfig;
 use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SitemapSourceInterface;
@@ -83,10 +84,11 @@ final class SitemapServices
      * @param string                        $sitemapUrlOption the adapter's name of `sitemap.url` in its error texts (`indexnow.sitemap.url`, `sitemap.url`)
      * @param SubmitterFactoryInterface|null $unverified      the plain command submitter factory for `--no-verify` (null = the same as $submitters)
      * @param ClockInterface|null            $clock           the graph's clock, which `--changed-since "1 day"` counts back from (null = the wall clock)
+     * @param SeenStoreInterface|null        $seen            the store of seen URLs behind `--new-only` (null = the option answers that this application has none)
      */
-    public static function runner(IndexNowKit $indexNow, SitemapSourceInterface $source, SubmitterFactoryInterface $submitters, SitemapConfig $config, ResultFormatterInterface $formatter, string $sitemapUrlOption, ?SubmitterFactoryInterface $unverified, ?ClockInterface $clock = null): SitemapRunner
+    public static function runner(IndexNowKit $indexNow, SitemapSourceInterface $source, SubmitterFactoryInterface $submitters, SitemapConfig $config, ResultFormatterInterface $formatter, string $sitemapUrlOption, ?SubmitterFactoryInterface $unverified, ?ClockInterface $clock = null, ?SeenStoreInterface $seen = null): SitemapRunner
     {
-        return new SitemapRunner($indexNow, $source, $submitters, $config->url, $formatter, $sitemapUrlOption, $unverified, $config->enabled, $clock);
+        return new SitemapRunner($indexNow, $source, $submitters, $config->url, $formatter, $sitemapUrlOption, $unverified, $config->enabled, $clock, $seen);
     }
 
     /** The `sitemap` command over {@see runner()} (or over a runner the adapter built itself). */

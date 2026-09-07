@@ -3,6 +3,27 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: SemVer; until 1.0 minor versions may
 contain breaking changes, listed under "Changed". What the compatibility promise covers: [docs/bc.md](docs/bc.md).
 
+## Unreleased
+
+### Added
+
+- **`sitemap --new-only` and `Sitemap\SeenStoreInterface`** (wave N, spec 19b §3.5): submit only the URLs that are new
+  or changed since the last run of the command, whatever `<lastmod>` says or does not say. The interface (Implement
+  tier: `unseen(iterable<SitemapEntry>): iterable<SitemapEntry>`, `remember(iterable<SitemapEntry>): void`) keeps the
+  fingerprint of every announced entry — URL plus `<lastmod>` in ISO 8601, or empty; `Console\SitemapRunner` takes it
+  as the appended, named `$seen` (`SitemapServices::runner(…, seen:)` likewise), calls `unseen()` once after the host
+  filter and `remember()` per batch whose results did not fail — with or without the option, never with `--dry-run` —
+  so a full run followed by scheduled `--new-only` runs announces each change once. `Console\SitemapOptions::$newOnly`;
+  `Console\Definitions::sitemap()` declares the option for every adapter. Without a store the option answers
+  `SitemapRunner::NO_SEEN_STORE` (`--new-only needs a store of seen URLs; this application has none (the CLI keeps one
+  in its state file).`) with exit 2 and reads nothing — the framework adapters have none in this wave; the `indexnow`
+  CLI (`indexnowkit/cli`) keeps one in its sqlite state file. The summary line gains `, N new or changed`.
+  `--changed-since` and `--new-only` add up: the window first, then the store.
+
+### Changed
+
+- Requires `indexnowkit/core ^0.13.1`.
+
 ## [0.8.0] — 2026-09-08
 
 ### Added

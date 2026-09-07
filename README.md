@@ -102,8 +102,14 @@ map) there is nothing to compare against: the entries go as they are, with a war
 ## The command
 
 `Sitemap\Console\SitemapRunner` is the body of `sitemap [url]` (`--changed-since "1 day"`, `--allow-foreign-hosts`,
-`--force`, `--dry-run`, `--json`, `--no-verify`); it streams, submits every `batch.max_urls` URLs, and submits the pending batch
-before reporting a mid-run failure (the re-run is idempotent, what was read is still worth announcing). `--no-verify`
+`--force`, `--dry-run`, `--json`, `--no-verify`, `--new-only`); it streams, submits every `batch.max_urls` URLs, and submits the pending batch
+before reporting a mid-run failure (the re-run is idempotent, what was read is still worth announcing). `--new-only`
+submits only the URLs that are new or changed since the last run: the runner keeps the fingerprint of every entry it
+announced (URL plus `<lastmod>`, or none) in a `Sitemap\SeenStoreInterface` the application provides — the
+[`indexnow` CLI](https://github.com/indexnowkit/php/tree/main/packages/cli) keeps one in its state file, so a
+sitemap without `lastmod` still gets each change announced once; a framework adapter has no such store yet and
+answers `--new-only needs a store of seen URLs` with exit 2. Every run that is not `--dry-run` teaches the store
+(a failed batch excepted), so "the whole sitemap once, then `--new-only` in cron" announces each change exactly once. `--no-verify`
 submits past the pre-flight of [`indexnowkit/verify`](https://github.com/indexnowkit/php/tree/main/packages/verify)
 when the adapter has it enabled (a sitemap is the site's own list of its URLs, and a batch above `verify.max_batch`
 would go unverified anyway, with a warning); without the package the flag is accepted and changes nothing. `--force`

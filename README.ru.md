@@ -94,8 +94,14 @@ submitter'а: тогда `Http\TransportFactory::lazy($kit->config)`.
 ## Команда
 
 `Sitemap\Console\SitemapRunner` — тело `sitemap [url]` (`--changed-since "1 day"`, `--allow-foreign-hosts`,
-`--force`, `--dry-run`, `--json`): читает потоково, отправляет каждые `batch.max_urls` URL и досылает
+`--force`, `--dry-run`, `--json`, `--no-verify`, `--new-only`): читает потоково, отправляет каждые `batch.max_urls` URL и досылает
 накопленную порцию перед сообщением о сбое посреди прогона (повтор идемпотентен, прочитанное стоит объявить).
+`--new-only` отправляет только новые или изменившиеся с прошлого прогона URL: раннер хранит отпечаток каждой
+объявленной записи (URL плюс `<lastmod>` или его отсутствие) в `Sitemap\SeenStoreInterface`, который даёт приложение —
+[CLI `indexnow`](https://github.com/indexnowkit/php/tree/main/packages/cli) держит его в файле состояния, так что
+sitemap без `lastmod` тоже объявляет каждое изменение один раз; у адаптеров фреймворков такого хранилища пока нет, и
+они отвечают `--new-only needs a store of seen URLs` с кодом 2. Каждый прогон без `--dry-run` учит хранилище (кроме
+упавших батчей): «весь sitemap один раз, дальше `--new-only` в cron» объявляет каждое изменение ровно один раз.
 Команда `check` каждого адаптера несёт `Sitemap\Check\SitemapSpoolCheck`: куда складываются документы и
 записываем ли этот каталог — иначе это всплывает на первом запуске по расписанию.
 

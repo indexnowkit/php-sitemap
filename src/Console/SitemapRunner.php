@@ -15,10 +15,14 @@ use IndexNowKit\Console\ResultRenderer;
 use IndexNowKit\Exception\InvalidUrlException;
 use IndexNowKit\Http\Exception\TransportException;
 use IndexNowKit\IndexNowKit;
+use IndexNowKit\Result;
+use IndexNowKit\ResultStatus;
+use IndexNowKit\Sitemap\SeenStoreInterface;
 use IndexNowKit\Sitemap\SitemapEntry;
 use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SitemapSourceInterface;
 use IndexNowKit\Submission\ResultSummary;
+use IndexNowKit\SubmitterInterface;
 use IndexNowKit\Url\Punycode;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -46,6 +50,10 @@ final class SitemapRunner
      *                                                             adapter that registers no command at all when it is off never gets here)
      * @param ClockInterface|null            $clock                the clock `--changed-since "1 day"` counts back from (PSR-20): the graph's
      *                                                             clock, so `Testing\FrozenClock` moves it with everything else; null = the wall clock
+     * @param SeenStoreInterface|null        $seen                 the store of seen URLs behind `--new-only`; every batch whose results did not
+     *                                                             fail is remembered in it (not with `--dry-run`), with or without the option, so
+     *                                                             a full run followed by scheduled `--new-only` runs announces each change once.
+     *                                                             null = the option answers that this application has no store, exit INVALID
      */
     public function __construct(
         private readonly IndexNowKit $indexNow,
@@ -57,7 +65,11 @@ final class SitemapRunner
         private readonly ?SubmitterFactoryInterface $unverifiedSubmitters = null,
         private readonly bool $enabled = true,
         private readonly ?ClockInterface $clock = null,
+        private readonly ?SeenStoreInterface $seen = null,
     ) {}
+
+    /** What `--new-only` answers in an application that keeps no store of seen URLs (exit 2). */
+    public const NO_SEEN_STORE = '--new-only needs a store of seen URLs; this application has none (the CLI keeps one in its state file).';
 
     /**
      * @return int exit code ({@see ExitCode})
@@ -70,6 +82,11 @@ final class SitemapRunner
             return ExitCode::INVALID;
         }
         $json = $options->json;
+        if ($options->newOnly && $this->seen === null) {
+            $io->error(self::NO_SEEN_STORE);
+
+            return ExitCode::INVALID;
+        }
         $sitemap = $this->sitemapUrl($options->sitemap);
         if ($sitemap === null) {
             $io->error(\sprintf('Give a sitemap URL, or configure %s or base_url.', $this->sitemapUrlOption));
@@ -89,6 +106,7 @@ final class SitemapRunner
         }
         $entries = $this->reader instanceof SitemapReader ? $this->reader->read($sitemap, $since, $allowForeignHosts) : $this->reader->read($sitemap, $since);
         $found = 0;
+        $read = 0;
 
         // A <loc> names any host it likes, and a sitemap built from user content (or a swapped one) would otherwise
         // make the pre-flight of indexnowkit/verify GET internal addresses. Only hosts this site has a key for pass.
@@ -98,6 +116,10 @@ final class SitemapRunner
             ($json ? $io->getErrorStyle() : $io)->warning('No host can be derived from base_url or the hosts map, so the <loc> entries are submitted whatever host they name. Configure base_url (and strict_hosts: true when the sitemap is built from user content).');
         } else {
             $entries = self::onManagedHosts($entries, $managed, $skipped);
+        }
+        if ($options->newOnly && $this->seen !== null) {
+            // what the store already knows under the same fingerprint drops out here; $read keeps the count before it
+            $entries = $this->seen->unseen(self::counted($entries, $read));
         }
 
         if ($options->dryRun) {
@@ -109,7 +131,7 @@ final class SitemapRunner
                 return ExitCode::FAILURE;
             }
             if (!$json) {
-                $io->text(self::foundLine($found, $sitemap, $since));
+                $io->text(self::foundLine($found, $sitemap, $since, $options->newOnly ? $read : null));
             }
             self::skippedNote($io, $skipped, $json);
 
@@ -122,14 +144,15 @@ final class SitemapRunner
             : SubmitterFactory::choose($this->submitters, $this->indexNow, $options->force, false);
         $batchSize = max(1, $this->indexNow->config->batchMaxUrls);
         $summary = new ResultSummary();
+        /** @var list<SitemapEntry> $batch */
         $batch = [];
         $batches = 0;
         try {
             foreach ($entries as $entry) {
                 ++$found;
-                $batch[] = $entry->url;
+                $batch[] = $entry;
                 if (\count($batch) >= $batchSize) {
-                    $summary->add($submitter->submit($batch));
+                    $summary->add($this->submitBatch($submitter, $batch));
                     $batch = [];
                     ++$batches;
                     if (!$json && $io->isVerbose()) {
@@ -140,7 +163,7 @@ final class SitemapRunner
         } catch (TransportException $e) {
             // Whatever was read before the failure is still worth announcing; the re-run is idempotent anyway.
             if ($batch !== []) {
-                $summary->add($submitter->submit($batch));
+                $summary->add($this->submitBatch($submitter, $batch));
                 ++$batches;
             }
             $error = \sprintf('Cannot read %s: %s', $sitemap, $e->getMessage());
@@ -161,10 +184,10 @@ final class SitemapRunner
             return ExitCode::FAILURE;
         }
         if ($batch !== []) {
-            $summary->add($submitter->submit($batch));
+            $summary->add($this->submitBatch($submitter, $batch));
         }
         if (!$json) {
-            $io->text(self::foundLine($found, $sitemap, $since));
+            $io->text(self::foundLine($found, $sitemap, $since, $options->newOnly ? $read : null));
         }
         self::skippedNote($io, $skipped, $json);
         if ($since === null && $found > $batchSize) {
@@ -173,6 +196,45 @@ final class SitemapRunner
         }
 
         return $this->formatter->summary($io, $summary, $json);
+    }
+
+    /**
+     * One batch: the URLs submitted, and when the batch came back without a failed result the entries remembered in
+     * the store of seen URLs (a failed batch is announced again next time; a skipped one — debounced, dry run of the
+     * config — is not).
+     *
+     * @param list<SitemapEntry> $batch
+     *
+     * @return list<Result>
+     */
+    private function submitBatch(SubmitterInterface $submitter, array $batch): array
+    {
+        $results = $submitter->submit(array_map(static fn(SitemapEntry $entry): string => $entry->url, $batch));
+        if ($this->seen !== null) {
+            foreach ($results as $result) {
+                if ($result->status === ResultStatus::Failed) {
+                    return $results;
+                }
+            }
+            $this->seen->remember($batch);
+        }
+
+        return $results;
+    }
+
+    /**
+     * The entries as they are, counting them into $read as they pass.
+     *
+     * @param iterable<SitemapEntry> $entries
+     *
+     * @return Generator<int, SitemapEntry>
+     */
+    private static function counted(iterable $entries, int &$read): Generator
+    {
+        foreach ($entries as $entry) {
+            ++$read;
+            yield $entry;
+        }
     }
 
     private function sitemapUrl(?string $argument): ?string
@@ -270,9 +332,12 @@ final class SitemapRunner
         ));
     }
 
-    private static function foundLine(int $found, string $sitemap, ?DateTimeImmutable $since): string
+    /**
+     * @param int|null $read with `--new-only`: how many entries the store was asked about (the ones found); $found is then the new or changed ones
+     */
+    private static function foundLine(int $found, string $sitemap, ?DateTimeImmutable $since, ?int $read = null): string
     {
-        return \sprintf('%d URL(s) found in %s%s', $found, $sitemap, $since !== null ? ' changed since ' . $since->format(DATE_ATOM) : '');
+        return \sprintf('%d URL(s) found in %s%s%s', $read ?? $found, $sitemap, $since !== null ? ' changed since ' . $since->format(DATE_ATOM) : '', $read === null ? '' : \sprintf(', %d new or changed', $found));
     }
 
     /**
