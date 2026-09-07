@@ -16,6 +16,7 @@ use IndexNowKit\Sitemap\Console\SitemapRunner;
 use IndexNowKit\Sitemap\SitemapConfig;
 use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SitemapSourceInterface;
+use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -81,10 +82,11 @@ final class SitemapServices
      *
      * @param string                        $sitemapUrlOption the adapter's name of `sitemap.url` in its error texts (`indexnow.sitemap.url`, `sitemap.url`)
      * @param SubmitterFactoryInterface|null $unverified      the plain command submitter factory for `--no-verify` (null = the same as $submitters)
+     * @param ClockInterface|null            $clock           the graph's clock, which `--changed-since "1 day"` counts back from (null = the wall clock)
      */
-    public static function runner(IndexNowKit $indexNow, SitemapSourceInterface $source, SubmitterFactoryInterface $submitters, SitemapConfig $config, ResultFormatterInterface $formatter, string $sitemapUrlOption, ?SubmitterFactoryInterface $unverified): SitemapRunner
+    public static function runner(IndexNowKit $indexNow, SitemapSourceInterface $source, SubmitterFactoryInterface $submitters, SitemapConfig $config, ResultFormatterInterface $formatter, string $sitemapUrlOption, ?SubmitterFactoryInterface $unverified, ?ClockInterface $clock = null): SitemapRunner
     {
-        return new SitemapRunner($indexNow, $source, $submitters, $config->url, $formatter, $sitemapUrlOption, $unverified, $config->enabled);
+        return new SitemapRunner($indexNow, $source, $submitters, $config->url, $formatter, $sitemapUrlOption, $unverified, $config->enabled, $clock);
     }
 
     /** The `sitemap` command over {@see runner()} (or over a runner the adapter built itself). */

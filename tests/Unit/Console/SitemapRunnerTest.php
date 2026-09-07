@@ -19,6 +19,7 @@ use IndexNowKit\Sitemap\SitemapSourceInterface;
 use IndexNowKit\Sitemap\Tests\Support\Factory;
 use IndexNowKit\SubmitterInterface;
 use IndexNowKit\Testing\FakeTransport;
+use IndexNowKit\Testing\FrozenClock;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -123,6 +124,34 @@ final class SitemapRunnerTest extends TestCase
             self::assertIsArray($rows[0]);
             self::assertSame(1, $rows[0]['url_count']);
             self::assertSame(['https://www.example.com/s1'], $this->sentUrls());
+        } finally {
+            @unlink($file);
+        }
+    }
+
+    #[TestDox('--changed-since "1 day" counts back from the runner\'s PSR-20 clock; an absolute date does not move with it; the wall clock without one')]
+    public function testChangedSinceOnTheClock(): void
+    {
+        $now = new DateTimeImmutable('2026-03-10 12:00:00 UTC');
+        self::assertSame('2026-03-09T12:00:00+00:00', SitemapRunner::changedSince('1 day', $now)?->format(DATE_ATOM));
+        self::assertSame('2026-03-10T10:00:00+00:00', SitemapRunner::changedSince('2 hours', $now)?->format(DATE_ATOM));
+        self::assertSame('2021-01-01T00:00:00+00:00', SitemapRunner::changedSince('2021-01-01', $now)?->format(DATE_ATOM));
+        self::assertNull(SitemapRunner::changedSince(null, $now));
+        self::assertNull(SitemapRunner::changedSince('', $now));
+        $wall = SitemapRunner::changedSince('1 day');
+        self::assertNotNull($wall);
+        self::assertEqualsWithDelta(time() - 86400, $wall->getTimestamp(), 5);
+
+        $file = $this->sitemapFile(self::URLSET . '<url><loc>https://www.example.com/old</loc><lastmod>2026-03-08</lastmod></url><url><loc>https://www.example.com/new</loc><lastmod>2026-03-10</lastmod></url></urlset>');
+        try {
+            $kit = $this->kit();
+            $reader = SitemapReader::fromConfig(SitemapConfig::fromArray(['spool' => 'memory', 'fetch_retries' => 0]), $this->transport);
+            $runner = new SitemapRunner($kit, $reader, Factory::submitters($this->transport, $kit), clock: new FrozenClock('2026-03-10 12:00:00 UTC'));
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($file, changedSince: '1 day', dryRun: true)));
+            $display = $this->output->fetch();
+            self::assertStringContainsString('/new', $display);
+            self::assertStringNotContainsString('/old', $display, 'one day before the frozen clock, not before the wall clock');
+            self::assertStringContainsString('changed since 2026-03-09T12:00:00+00:00', $display);
         } finally {
             @unlink($file);
         }

@@ -5,7 +5,7 @@
 
 | Tier | Members |
 |---|---|
-| **Call** — signatures only grow by appended, defaulted parameters; pass anything past the first argument by name | `SitemapReader` (constructor, `fromConfig()`, `read()`, `parse()`), `SitemapConfig` (constructor, `fromArray()`, `disabled()`), `Console\SitemapRunner`, `Console\SitemapCommand` (the `indexnow:sitemap` name is a contract, the description is not), `Console\SitemapOptions`, `Check\SitemapSpoolCheck`, `Spool::create()`, `probeDisk()`, `uri()`, `close()` |
+| **Call** — signatures only grow by appended, defaulted parameters; pass anything past the first argument by name | `SitemapReader` (constructor, `fromConfig()`, `read()`, `parse()`), `SitemapConfig` (constructor, `fromArray()`, `disabled()`), `Console\SitemapRunner` (constructor and the static `changedSince()`: the clock and `$now` are appended, optional), `Console\SitemapCommand` (the `indexnow:sitemap` name is a contract, the description is not), `Console\SitemapOptions`, `Check\SitemapSpoolCheck`, `Spool::create()`, `probeDisk()`, `uri()`, `close()` |
 | **Implement** — methods are not added without a major version | `SitemapSourceInterface` |
 | **Value objects** — `final readonly`, properties only appended with defaults | `SitemapEntry`, `SitemapConfig` |
 | **Constants** — referenced, not hard-coded; values may change in a minor | `SitemapReader::MAX_XML_BYTES`, `MAX_SITEMAPS`, `SitemapConfig::OPTIONS`, `DEFAULT_MAX_DEPTH`, `DEFAULT_FETCH_RETRIES`, `MIN_MAX_BYTES`, `Spool::SCHEME` |

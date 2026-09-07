@@ -20,6 +20,7 @@ use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SitemapSourceInterface;
 use IndexNowKit\Submission\ResultSummary;
 use IndexNowKit\Url\Punycode;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -43,6 +44,8 @@ final class SitemapRunner
      * @param bool                           $enabled              `sitemap.enabled` ({@see \IndexNowKit\Sitemap\SitemapConfig::$enabled}): false = the command
      *                                                             answers `sitemap.enabled is false.` and INVALID without reading anything (an
      *                                                             adapter that registers no command at all when it is off never gets here)
+     * @param ClockInterface|null            $clock                the clock `--changed-since "1 day"` counts back from (PSR-20): the graph's
+     *                                                             clock, so `Testing\FrozenClock` moves it with everything else; null = the wall clock
      */
     public function __construct(
         private readonly IndexNowKit $indexNow,
@@ -53,6 +56,7 @@ final class SitemapRunner
         private readonly string $sitemapUrlOption = 'sitemap.url',
         private readonly ?SubmitterFactoryInterface $unverifiedSubmitters = null,
         private readonly bool $enabled = true,
+        private readonly ?ClockInterface $clock = null,
     ) {}
 
     /**
@@ -73,7 +77,7 @@ final class SitemapRunner
             return ExitCode::INVALID;
         }
         try {
-            $since = self::changedSince($options->changedSince);
+            $since = self::changedSince($options->changedSince, $this->clock?->now());
         } catch (Exception $e) {
             $io->error(\sprintf('--changed-since: %s', $e->getMessage()));
 
@@ -185,17 +189,21 @@ final class SitemapRunner
     }
 
     /**
-     * "1 day" means one day ago; anything else is handed to DateTimeImmutable as it is.
+     * "1 day" means one day before $now (the wall clock when none is given); anything else is handed to
+     * DateTimeImmutable as it is — an absolute date does not move with the clock.
      *
      * @throws Exception on an unparseable value
      */
-    public static function changedSince(?string $option): ?DateTimeImmutable
+    public static function changedSince(?string $option, ?DateTimeImmutable $now = null): ?DateTimeImmutable
     {
         if ($option === null || $option === '') {
             return null;
         }
+        if (preg_match('/^\d+\s*\w+$/', $option) === 1) {
+            return ($now ?? new DateTimeImmutable())->modify('-' . $option);
+        }
 
-        return new DateTimeImmutable(preg_match('/^\d+\s*\w+$/', $option) === 1 ? '-' . $option : $option);
+        return new DateTimeImmutable($option);
     }
 
     /**

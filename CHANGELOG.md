@@ -7,6 +7,13 @@ contain breaking changes, listed under "Changed". What the compatibility promise
 
 ### Added
 
+- **`Console\SitemapRunner` takes `?Psr\Clock\ClockInterface $clock = null`** (appended) and `changedSince(?string $option,
+  ?DateTimeImmutable $now = null)` counts a relative `--changed-since` ("1 day") back from `$now` (wave M, spec 19 §4.9,
+  PSR-20): `SitemapServices::runner(…, ?ClockInterface $clock = null)` passes the graph's clock, so `Testing\FrozenClock`
+  moves the sitemap filter with the debounce window and the submission timestamps. Before, the runner read the wall
+  clock through `new DateTimeImmutable('-1 day')` — the one place of the family a frozen clock could not reach. An
+  absolute date is taken as it is, as before.
+
 - **`Console\SitemapCommand`** (wave L, spec 18): the `indexnow:sitemap` command itself as a symfony/console class over
   `Console\SitemapRunner`, with `#[AsCommand]`; `Sitemap\Adapter\SitemapServices::command($runner, $sitemapUrlOption)`
   builds it. The Symfony bundle and the Yii3 package register this class instead of a copy of their own; an adapter
