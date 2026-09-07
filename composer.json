@@ -40,9 +40,9 @@
         "phpstan/phpstan": "^2.2.13",
         "phpstan/phpstan-phpunit": "^2.0.18",
         "phpstan/phpstan-strict-rules": "^2.0.12",
-        "phpunit/phpunit": "^11.5",
+        "phpunit/phpunit": "^11.5 || ^12.0 || ^13.0",
         "roave/security-advisories": "dev-latest",
-        "symfony/http-client": "^6.4 || ^7.0"
+        "symfony/http-client": "^6.4 || ^7.0 || ^8.0"
     },
     "suggest": {
         "ext-zlib": "Reading gzip-compressed sitemaps"
@@ -71,7 +71,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.7.x-dev"
+            "dev-main": "0.8.x-dev"
         }
     }
 }

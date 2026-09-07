@@ -3,10 +3,18 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: SemVer; until 1.0 minor versions may
 contain breaking changes, listed under "Changed". What the compatibility promise covers: [docs/bc.md](docs/bc.md).
 
-## [0.7.1] — Unreleased
+## [0.8.0] — Unreleased
 
 ### Changed
 
+- **A `<loc>` on a host this site has no key for is dropped** (`Console\SitemapRunner`), before anything fetches or
+  submits it: only the hosts `KeyProviderInterface::managedHosts()` names — `base_url` plus the `hosts` map — pass,
+  whatever source produced the entries. One line in the run summary (on stderr with `--json`) says how many URLs were
+  skipped and on which hosts. Nested sitemaps were already restricted to the origin of the root; the entries were not,
+  so a sitemap built from user content (or a swapped one) could make the pre-flight of `indexnowkit/verify` GET
+  internal addresses. With no key at all (neither `base_url` nor a `hosts` map) nothing can be compared: the entries go
+  as they are, with one warning. `strict_hosts: true` is documented as the recommendation for a sitemap built from user
+  content.
 - `Sitemap\Adapter\SitemapServices::package()` delegates to the core's `Adapter\OptionalPackage::sitemap()` (core
   0.13.0): the name, the marker and the feature word live there, so an adapter asks about the package without loading
   this class. Same object, same texts; adapters should call `OptionalPackage::sitemap()` directly.
