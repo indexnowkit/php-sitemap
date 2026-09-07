@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <!--
-    Psalm is not part of the regular pipeline (phpstan level 9 is): this configuration exists for the scheduled
-    taint analysis of the sitemap reader, the one package that parses untrusted XML fetched from the network.
-    Run: psalm with the taint-analysis flag (see .github/workflows/psalm-taint.yml).
+    Psalm runs the taint analysis of this package only (bin/taint sitemap, .github/workflows/taint.yml); phpstan level 9 is the
+    type checker. src plus the entry-point harness tests/Taint/entrypoints.php, which calls the public API with request
+    data: a library has no taint source of its own. Psalm is a tool of the monorepo (tools/psalm), not a dev dependency.
 -->
 <psalm
     errorLevel="4"
@@ -11,12 +11,21 @@
     findUnusedCode="false"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
-    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    xsi:schemaLocation="https://getpsalm.org/schema/config ../../tools/psalm/vendor/vimeo/psalm/config.xsd"
 >
     <projectFiles>
         <directory name="src" />
+        <file name="tests/Taint/entrypoints.php" />
         <ignoreFiles>
             <directory name="vendor" />
         </ignoreFiles>
     </projectFiles>
+    <issueHandlers>
+        <!-- read() takes the operator's sitemap argument (a URL, or a local path on purpose: the sitemap command and
+             sitemap.sources accept files), so the fopen() of a local sitemap is the feature, not a flow to close; a
+             nested sitemap fetched from the network is restricted to the origin of the root document before it is read. -->
+        <TaintedFile>
+            <errorLevel type="suppress"><file name="src/SitemapReader.php"/></errorLevel>
+        </TaintedFile>
+    </issueHandlers>
 </psalm>
