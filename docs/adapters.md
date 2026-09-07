@@ -38,7 +38,9 @@ $exit = $runner->run($io, new SitemapOptions($argument, $changedSince, $allowFor
   around a custom submitter; `Http\TransportFactory::lazy($kit->config)` covers that.
 - **Source.** Type the command against `SitemapSourceInterface` and expose the reader under an alias of it, so an
   application can decorate the source (filter, rewrite) or replace it. `--allow-foreign-hosts` only reaches the
-  shipped `SitemapReader`; the runner warns when the configured source is something else.
+  shipped `SitemapReader`; the runner warns when the configured source is something else. Whatever the source, the
+  runner keeps only the entries on hosts `$kit->keys->managedHosts()` names, and counts the rest in one line: a
+  replacement source does not have to filter hosts itself, and cannot opt out of it.
 - **Output.** The runner streams, submits every `batch.max_urls` URLs through `Adapter\SubmitterFactory::choose()`
   (`--force`/`--dry-run` get a separate submitter), folds results into `Submission\ResultSummary`, and submits the
   pending batch before reporting a mid-run failure; `--json` keeps stdout machine-readable (the error goes to

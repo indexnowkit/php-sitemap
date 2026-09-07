@@ -6,17 +6,20 @@ namespace IndexNowKit\Sitemap\Console;
 
 use DateTimeImmutable;
 use Exception;
+use Generator;
 use IndexNowKit\Adapter\SubmitterFactory;
 use IndexNowKit\Adapter\SubmitterFactoryInterface;
 use IndexNowKit\Console\ExitCode;
 use IndexNowKit\Console\ResultFormatterInterface;
 use IndexNowKit\Console\ResultRenderer;
+use IndexNowKit\Exception\InvalidUrlException;
 use IndexNowKit\Http\Exception\TransportException;
 use IndexNowKit\IndexNowKit;
 use IndexNowKit\Sitemap\SitemapEntry;
 use IndexNowKit\Sitemap\SitemapReader;
 use IndexNowKit\Sitemap\SitemapSourceInterface;
 use IndexNowKit\Submission\ResultSummary;
+use IndexNowKit\Url\Punycode;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -24,6 +27,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * `batch.max_urls`, so the URL list never has to fit in memory. The source is whatever implements
  * {@see SitemapSourceInterface} (the shipped {@see SitemapReader}, or the application's decorator/replacement);
  * `--allow-foreign-hosts` only reaches the shipped reader.
+ *
+ * Whatever the source, a `<loc>` on a host this site has no key for is dropped before anything fetches or submits it
+ * ({@see onManagedHosts()}): the document decides which URLs are read, and the pre-flight of indexnowkit/verify would
+ * otherwise GET every address it names.
  */
 final class SitemapRunner
 {
@@ -70,6 +77,16 @@ final class SitemapRunner
         $entries = $this->reader instanceof SitemapReader ? $this->reader->read($sitemap, $since, $allowForeignHosts) : $this->reader->read($sitemap, $since);
         $found = 0;
 
+        // A <loc> names any host it likes, and a sitemap built from user content (or a swapped one) would otherwise
+        // make the pre-flight of indexnowkit/verify GET internal addresses. Only hosts this site has a key for pass.
+        $managed = $this->indexNow->keys->managedHosts();
+        $skipped = [];
+        if ($managed === []) {
+            ($json ? $io->getErrorStyle() : $io)->warning('No host can be derived from base_url or the hosts map, so the <loc> entries are submitted whatever host they name. Configure base_url (and strict_hosts: true when the sitemap is built from user content).');
+        } else {
+            $entries = self::onManagedHosts($entries, $managed, $skipped);
+        }
+
         if ($options->dryRun) {
             try {
                 $found = $json ? self::listJson($io, $entries) : self::listText($io, $entries);
@@ -81,6 +98,7 @@ final class SitemapRunner
             if (!$json) {
                 $io->text(self::foundLine($found, $sitemap, $since));
             }
+            self::skippedNote($io, $skipped, $json);
 
             return ExitCode::SUCCESS;
         }
@@ -125,6 +143,7 @@ final class SitemapRunner
                 $io->text(\sprintf('%d URL(s) read before the error were submitted in %d batch(es); re-run the command once the sitemap is reachable.', $found, $batches));
                 $this->formatter->summary($io, $summary, false);
             }
+            self::skippedNote($io, $skipped, $json);
 
             return ExitCode::FAILURE;
         }
@@ -134,6 +153,7 @@ final class SitemapRunner
         if (!$json) {
             $io->text(self::foundLine($found, $sitemap, $since));
         }
+        self::skippedNote($io, $skipped, $json);
         if ($since === null && $found > $batchSize) {
             // A full run is the one-off after installation; scheduled runs pass --changed-since or re-announce everything.
             ($json ? $io->getErrorStyle() : $io)->warning(\sprintf('%d URL(s) submitted from the whole sitemap in %d batches without --changed-since: engines see every page as changed and may crawl them all again. Run the full sitemap once, then schedule this command with --changed-since (e.g. "1 day").', $found, (int) ceil($found / $batchSize)));
@@ -167,6 +187,70 @@ final class SitemapRunner
         }
 
         return new DateTimeImmutable(preg_match('/^\d+\s*\w+$/', $option) === 1 ? '-' . $option : $option);
+    }
+
+    /**
+     * The entries whose host this site has a key for; every other `<loc>` is counted in $skipped by host and dropped.
+     * With `strict_hosts: true` an unmanaged host would be skipped by the submitter anyway (`Reason::NoKey`), but the
+     * pre-flight of indexnowkit/verify runs before that decision and would GET the address — so the document never
+     * gets to name one. A `<loc>` without a host is left alone: `base_url` resolves it, like every other relative URL.
+     *
+     * @param iterable<SitemapEntry>   $entries
+     * @param list<string>           $managed hosts with a key (`$indexNow->keys->managedHosts()`)
+     * @param array<string, int>     $skipped host => how many of its URLs were dropped, filled while streaming
+     *
+     * @return Generator<int, SitemapEntry>
+     */
+    private static function onManagedHosts(iterable $entries, array $managed, array &$skipped): Generator
+    {
+        foreach ($entries as $entry) {
+            $host = self::hostOf($entry->url);
+            if ($host !== null && !\in_array($host, $managed, true)) {
+                $skipped[$host] = ($skipped[$host] ?? 0) + 1;
+
+                continue;
+            }
+            yield $entry;
+        }
+    }
+
+    /** The host of a `<loc>` as `managedHosts()` spells it (lower-case, punycode), null when the URL names none. */
+    private static function hostOf(string $url): ?string
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        if (!\is_string($host) || $host === '') {
+            return null;
+        }
+
+        try {
+            return strtolower(Punycode::encodeHost($host));
+        } catch (InvalidUrlException) {
+            return strtolower($host); // never in managedHosts(): dropped, and the count says so
+        }
+    }
+
+    /**
+     * One line naming how many URLs were dropped and on which hosts. With `--json` it goes to stderr: stdout stays
+     * the machine-readable document.
+     *
+     * @param array<string, int> $skipped
+     */
+    private static function skippedNote(SymfonyStyle $io, array $skipped, bool $json): void
+    {
+        if ($skipped === []) {
+            return;
+        }
+        $hosts = array_keys($skipped);
+        sort($hosts);
+        $shown = \array_slice($hosts, 0, 5);
+
+        ($json ? $io->getErrorStyle() : $io)->warning(\sprintf(
+            '%d URL(s) skipped on %d host(s) this site does not manage (%s%s): a sitemap can name any host, and the pre-flight would fetch it. Add the host to the hosts map if it is yours, and keep strict_hosts: true when the sitemap is built from user content.',
+            array_sum($skipped),
+            \count($hosts),
+            implode(', ', $shown),
+            \count($hosts) > \count($shown) ? ', …' : '',
+        ));
     }
 
     private static function foundLine(int $found, string $sitemap, ?DateTimeImmutable $since): string

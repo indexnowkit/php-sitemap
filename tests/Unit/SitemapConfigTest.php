@@ -67,6 +67,7 @@ final class SitemapConfigTest extends TestCase
         yield 'negative retries' => [['fetch_retries' => -2], '"sitemap.fetch_retries" must be >= 0'];
     }
 
+    /** @param array<string, mixed> $block */
     #[DataProvider('invalid')]
     #[TestDox('an invalid value is a ConfigurationException naming the dotted key: $_dataName')]
     public function testInvalid(array $block, string $message): void
@@ -90,7 +91,9 @@ final class SitemapConfigTest extends TestCase
         $disabled = SitemapConfig::loadOrDisabled(['spool' => 'tape'], $logger, 'php yii indexnow/check');
         self::assertFalse($disabled->enabled);
         self::assertSame(['indexnow: invalid sitemap configuration, the sitemap command is disabled until it is fixed: "sitemap.spool" must be one of auto, disk, memory, got "tape". (run "php yii indexnow/check")'], $logger->messages('critical'));
-        self::assertInstanceOf(ConfigurationException::class, $logger->records[0]['context']['exception'] ?? null);
+        /** @var list<array{level: string, message: string, context: array<mixed>}> $records */
+        $records = $logger->records;
+        self::assertInstanceOf(ConfigurationException::class, $records[0]['context']['exception'] ?? null);
     }
 
     #[TestDox('OPTIONS are dotted keys only, and together with Config::OPTIONS they let unknownOptions() see a typo inside the block')]

@@ -90,6 +90,15 @@ gunzip) are capped; external entities and network access are disabled in the XML
 logged and skipped; a failing root throws `Http\Exception\TransportException`, and a response shorter than its
 `Content-Length` is a truncated download, never a document. Details in [SECURITY.md](SECURITY.md).
 
+A `<loc>` may name any host, so the command keeps only the entries whose host this site has a key for (`base_url` plus
+the `hosts` map — `KeyProviderInterface::managedHosts()`); the rest are dropped before anything fetches or submits
+them, and one line says how many and on which hosts. This matters most with
+[`indexnowkit/verify`](https://github.com/indexnowkit/php/tree/main/packages/verify): its pre-flight GETs every URL of
+the batch, so without the filter a sitemap **built from user content** (or a swapped one) could walk internal
+addresses. **When the sitemap is built from user content, set `strict_hosts: true`** as well, so a host that slips
+through is refused a key rather than sent under the default one. With no key at all (neither `base_url` nor a `hosts`
+map) there is nothing to compare against: the entries go as they are, with a warning.
+
 ## The command
 
 `Sitemap\Console\SitemapRunner` is the body of `sitemap [url]` (`--changed-since "1 day"`, `--allow-foreign-hosts`,

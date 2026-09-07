@@ -207,6 +207,65 @@ final class SitemapRunnerTest extends TestCase
         self::assertStringContainsString('Nothing submitted: the source yielded no URL.', $this->output->fetch());
     }
 
+    #[TestDox('a <loc> on a host this site has no key for is dropped before anything fetches it, counted in one warning; the hosts map admits it')]
+    public function testForeignLocEntriesAreDropped(): void
+    {
+        $kit = $this->kit();
+        $runner = $this->runner($kit);
+        $file = $this->sitemapFile(self::URLSET
+            . '<url><loc>https://www.example.com/ok</loc></url>'
+            . '<url><loc>http://169.254.169.254/latest/meta-data/</loc></url>'
+            . '<url><loc>https://internal.corp/secret</loc></url>'
+            . '<url><loc>https://internal.corp/secret-2</loc></url>'
+            . '</urlset>');
+
+        try {
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($file)));
+            $display = $this->output->fetch();
+            self::assertSame(['https://www.example.com/ok'], $this->sentUrls(), 'the document does not get to name the hosts');
+            self::assertStringContainsString('1 URL(s) found', $display);
+            self::assertStringContainsString('3 URL(s) skipped on 2 host(s) this site does not manage', $display);
+            self::assertStringContainsString('169.254.169.254', $display);
+            self::assertStringContainsString('internal.corp', $display);
+
+            // --dry-run lists what would be submitted, so it drops them too.
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($file, dryRun: true, json: true)));
+            $display = $this->output->fetch();
+            // BufferedOutput has no separate stderr: the note lands next to the document here, on a real console it goes to stderr.
+            self::assertSame(1, preg_match('/\[[^]]*]/s', $display, $document));
+            $urls = json_decode($document[0], true, flags: JSON_THROW_ON_ERROR);
+            self::assertSame(['https://www.example.com/ok'], $urls, 'stdout stays the machine-readable document, the note goes to stderr');
+            self::assertStringContainsString('3 URL(s) skipped', $display);
+
+            // A host in the hosts map is managed, so its URLs pass.
+            $this->transport->posts = [];
+            $multi = $this->runner($this->kit(['hosts' => ['internal.corp' => Factory::KEY]]));
+            self::assertSame(ExitCode::SUCCESS, $multi->run($this->io(), new SitemapOptions($file)));
+            self::assertSame(['https://www.example.com/ok', 'https://internal.corp/secret', 'https://internal.corp/secret-2'], $this->sentUrls());
+            self::assertStringContainsString('1 URL(s) skipped on 1 host(s)', $this->output->fetch());
+        } finally {
+            @unlink($file);
+        }
+    }
+
+    #[TestDox('with no key for any host the entries are submitted as they are, with one warning: nothing to compare them against')]
+    public function testWithoutManagedHosts(): void
+    {
+        $kit = IndexNowKit::create(Config::fromArray(['base_url' => 'https://www.example.com', 'dry_run' => true]), $this->transport);
+        self::assertSame([], $kit->keys->managedHosts(), 'no key: no host is known to be ours');
+        $runner = $this->runner($kit);
+        $file = $this->sitemapFile(self::URLSET . '<url><loc>https://elsewhere.example.org/x</loc></url></urlset>');
+
+        try {
+            self::assertSame(ExitCode::SUCCESS, $runner->run($this->io(), new SitemapOptions($file, dryRun: true)));
+            $display = $this->output->fetch();
+            self::assertStringContainsString('https://elsewhere.example.org/x', $display);
+            self::assertStringContainsString('No host can be derived from base_url or the hosts map', $display);
+        } finally {
+            @unlink($file);
+        }
+    }
+
     #[TestDox('--no-verify submits through the second (plain) factory; without one the flag changes nothing')]
     public function testNoVerifyUsesTheUnverifiedFactory(): void
     {
@@ -225,7 +284,10 @@ final class SitemapRunnerTest extends TestCase
 
                 public function create(bool $force, bool $dryRun): SubmitterInterface
                 {
-                    $this->calls[] = $this->name . ($force ? ' force' : '');
+                    // Read once for PHPStan: $this->calls is written here and observed through the
+                    // by-reference $calls the constructor took it from, not through a read on $this.
+                    $before = $this->calls;
+                    $this->calls = [...$before, $this->name . ($force ? ' force' : '')];
 
                     return $this->kit->submitter;
                 }

@@ -82,6 +82,15 @@ submitter'а: тогда `Http\TransportFactory::lazy($kit->config)`.
 сбой корня — `Http\Exception\TransportException`; ответ короче своего `Content-Length` — недокачка, а не документ.
 Подробности — в [SECURITY.md](SECURITY.md).
 
+`<loc>` может назвать любой хост, поэтому команда оставляет только записи на хостах, для которых у сайта есть ключ
+(`base_url` плюс карта `hosts` — `KeyProviderInterface::managedHosts()`); остальные отбрасываются до того, как их
+кто-либо запросит или отправит, и одна строка сообщает, сколько и на каких хостах. Важнее всего это с
+[`indexnowkit/verify`](https://github.com/indexnowkit/php/tree/main/packages/verify): его pre-flight делает GET на
+каждый URL батча, и без фильтра sitemap, **собранный из пользовательских данных** (или подменённый), мог бы обойти
+внутренние адреса. **Если sitemap собирается из пользовательских данных, ставьте и `strict_hosts: true`** — тогда
+проскочивший хост получит отказ вместо ключа по умолчанию. Если ключа нет вовсе (ни `base_url`, ни карты `hosts`),
+сравнивать не с чем: записи идут как есть, с предупреждением.
+
 ## Команда
 
 `Sitemap\Console\SitemapRunner` — тело `sitemap [url]` (`--changed-since "1 day"`, `--allow-foreign-hosts`,
