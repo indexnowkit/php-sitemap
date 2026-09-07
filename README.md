@@ -3,7 +3,7 @@
 Re-announce a site's URLs to Yandex, Bing and the other [IndexNow](https://www.indexnow.org) engines from its own
 sitemap: a sitemap index, gzip-compressed and text sitemaps are streamed entry by entry and submitted in batches, so
 a million-URL sitemap never lives in memory. The `sitemap` command of every framework adapter of the family
-(`indexnowkit/symfony-bundle`, `laravel`, `yii2`) is this package; in plain PHP it is three lines over
+(`indexnowkit/symfony-bundle`, `laravel`, `yii2`, `yii3`) is this package; in plain PHP it is three lines over
 [`indexnowkit/core`](https://github.com/indexnowkit/php/tree/main/packages/core).
 
 **Google: no.** Google does not support IndexNow, its sitemap ping endpoint is gone and the Indexing API is limited to
@@ -112,7 +112,7 @@ An application decorates the source (filter, rewrite) or replaces it (another fo
 
 `Sitemap\Adapter\SitemapServices` is what a framework adapter wires for this package, in one place: the predicate (`package()`), the owned
 options, the validated block, the reader, the spool check, the body of the `sitemap` command — as static functions over the pieces, with `*For()` twins over the core's
-`Adapter\Services` for a runtime graph. The Symfony bundle, the Laravel and the Yii2 adapters build on it; see
+`Adapter\Services` for a runtime graph. The Symfony bundle, the Laravel, the Yii2 and the Yii3 adapters build on it; see
 [adapters.md](https://github.com/indexnowkit/php-core/blob/main/docs/adapters.md) of the core.
 
 ## Requirements
@@ -139,12 +139,12 @@ $indexNow->flush();                                            // batches of bat
 
 - Verify: the adapter's `check` command prints the `sitemap:` spool line; `bin/console indexnow:sitemap --dry-run`, `php artisan indexnow:sitemap --dry-run`, `php yii indexnow/sitemap --dry-run`.
 - Pitfalls:
-  - `dispatch: auto` exists in Symfony (`auto` | `messenger` | `sync` | `none`) and Yii2 (`auto` | `queue` | `sync` | `none`), **not** in Laravel (`queue` | `sync` | `none`).
-  - Locales: `router.locales` in Laravel and Yii2, `framework.enabled_locales` in Symfony; `locales: 'all'` on a rule uses that list.
+  - `dispatch: auto` exists in Symfony (`auto` | `messenger` | `sync` | `none`) and Yii2 (`auto` | `queue` | `sync` | `none`), **not** in Laravel (`queue` | `sync` | `none`); Yii3 has `sync` | `none` only.
+  - Locales: `router.locales` in Laravel, Yii2 and Yii3, `framework.enabled_locales` in Symfony; `locales: 'all'` on a rule uses that list.
   - `url:` names an accessor (method or property) that returns the URL; `urls:` is a list of literal URLs. Never put a literal in `url:`.
   - A string in `when:` is an accessor read as truthy (`published`, `isPublished`). A status string needs `Equals`: `when: new Equals('status', 'published')` (`IndexNowKit\Attribute\Param\Equals`).
-  - Manual submission is `submitEntity()` in Symfony, `submitModel()` in Laravel, `submitRecord()` in Yii2; the commands are `indexnow:submit-entity`, `indexnow:submit-model`, `indexnow/submit-record`. Bulk queries (`update()`, `DB::table()`, `updateAll()`) fire no hooks: submit afterwards with those.
-  - Laravel has two classes called `IndexNowKit`: the facade `IndexNowKit\Laravel\Facades\IndexNowKit` and the core service `IndexNowKit\IndexNowKit` (inject by type). Yii2 exposes the core through `Yii::$app->indexnow->kit()`.
+  - Manual submission is `submitEntity()` in Symfony, `submitModel()` in Laravel, `submitRecord()` in Yii2 and Yii3; the commands are `indexnow:submit-entity`, `indexnow:submit-model`, `indexnow/submit-record` (Yii2), `indexnow:submit-record` (Yii3). Bulk queries (`update()`, `DB::table()`, `updateAll()`) fire no hooks: submit afterwards with those.
+  - Laravel has two classes called `IndexNowKit`: the facade `IndexNowKit\Laravel\Facades\IndexNowKit` and the core service `IndexNowKit\IndexNowKit` (inject by type). Yii2 exposes the core through `Yii::$app->indexnow->kit()`; Yii3 defines `IndexNowKit\IndexNowKit` in the container.
   - Outside production a configured key with `dry_run` unset makes `check` fail (a staging copy would submit real URLs): set `dry_run: true` there, or `dry_run: false` explicitly when it submits on purpose.
   - Unknown configuration keys are warned about at boot (typos such as debounce.per_urls); the key list is `Config::OPTIONS` plus the adapter's own keys.
 
