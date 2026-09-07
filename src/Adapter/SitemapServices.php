@@ -27,12 +27,13 @@ use Psr\Log\LoggerInterface;
 final class SitemapServices
 {
     /**
-     * The one predicate for `indexnowkit/sitemap` (safe to call without the package: `::class` on an absent class is
-     * a string); null = detect, false = wire as if the package were absent (tests).
+     * The one predicate for `indexnowkit/sitemap`: `OptionalPackage::sitemap()` of the core, which an adapter calls
+     * directly — this class lives in the package and cannot be loaded to say "not installed". null = detect, false =
+     * wire as if the package were absent (tests).
      */
     public static function package(?bool $installed = null): OptionalPackage
     {
-        return new OptionalPackage('indexnowkit/sitemap', SitemapReader::class, 'sitemap', $installed);
+        return OptionalPackage::sitemap($installed);
     }
 
     /**
